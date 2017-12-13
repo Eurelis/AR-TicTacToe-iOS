@@ -204,10 +204,10 @@ class ViewController: UIViewController, ARSCNViewDelegate {
                 
                 // Retrieve plane width and height to calculate center and rescale element
                 let planeWidth = Float(currentPlane.planeGeometry!.width)
-                let planeHeight = Float(currentPlane.planeGeometry!.height)
+                let planeLength = Float(currentPlane.planeGeometry!.length)
                 
                 // Rescale 3D object to match plane sizes
-                let gameSize = planeWidth < planeHeight ? planeWidth : planeHeight
+                let gameSize = planeWidth < planeLength ? planeWidth : planeLength
                 self.gameScale = (gameSize / tictactoeSize) / 1.5
                 tictactoeBase.scale = SCNVector3Make(self.gameScale, self.gameScale, self.gameScale)
                 

@@ -17,27 +17,24 @@ class Plane: SCNNode {
     var isSelected: Bool = false
     
     // Init custom plane during scan
-    init(anchor: ARPlaneAnchor, hidden: Bool) {
+    init(anchor: ARPlaneAnchor) {
         super.init()
-
-        let width = CGFloat(anchor.extent.x)
-        let length = CGFloat(anchor.extent.z)
-        let planeHeight: CGFloat = 0.001
         
-        self.planeGeometry = SCNBox(width: width, height: length, length: planeHeight, chamferRadius: 0)
+        self.planeGeometry = SCNBox(width: CGFloat(anchor.extent.x),
+                                    height: CGFloat(anchor.extent.y),
+                                    length: CGFloat(anchor.extent.z),
+                                    chamferRadius: 0)
         
+        // Ajout d'une couleur à la SCNBox, pour aider la visualisation, ici nous utilisons un UIColor
+        // mais nous aurions pu utiliser un UIImage ou autre élément visuel
         let material = SCNMaterial()
         material.diffuse.contents = UIImage(named: "grid2")
         self.planeGeometry!.materials = [material]
         
+        // Enfin, nous créons un nouvel objet SCNNode correspondant au format de la SCNBox,
+        // afin de pouvoir la manipuler et l'ajouter à la scene
         let planeNode = SCNNode(geometry: self.planeGeometry!)
-        planeNode.position = SCNVector3Make(0, Float(-planeHeight / 2), 0)
         
-        // Planes in SceneKit are vertical by default so we need to rotate 90 degrees to match planes in ARKit
-        let angleRotation = Float(-Double.pi / 2.0)
-        planeNode.transform = SCNMatrix4MakeRotation(angleRotation, 1.0, 0.0, 0.0)
-        
-        // We add the new node to ourself since we inherited from SCNNode
         self.addChildNode(planeNode)
     }
     
@@ -51,9 +48,6 @@ class Plane: SCNNode {
         material.diffuse.contents = UIColor.white.withAlphaComponent(0) // the plane will be invisible
         self.planeGeometry!.materials = [material]
         self.isSelected = true
-        
-        // Defines physics body to be able to drop elements on the plane
-        self.physicsBody = SCNPhysicsBody(type: .kinematic, shape: SCNPhysicsShape(geometry: self.planeGeometry!, options: nil))
     }
     
     // Remove plane from sceneview
@@ -64,7 +58,8 @@ class Plane: SCNNode {
     // Update plane, when more surface is detected during scan
     func update(anchor: ARPlaneAnchor) {
         self.planeGeometry!.width = CGFloat(anchor.extent.x)
-        self.planeGeometry!.height = CGFloat(anchor.extent.z)
+        self.planeGeometry!.height = CGFloat(anchor.extent.y)
+        self.planeGeometry!.length = CGFloat(anchor.extent.z)
         
         // When the plane is first created it's center is 0,0,0 and the nodes transform contains the translation parameters.
         // As the plane is updated the planes translation remains the same but it's center is updated so we need to update the 3D geometry position

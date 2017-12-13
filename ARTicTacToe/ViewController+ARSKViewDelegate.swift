@@ -13,7 +13,7 @@ extension ViewController: ARSKViewDelegate {
     // Reseting sceneview session
     func resetSceneViewSession() {
         self.setStatus(status: "Initializing...")
-        self.ARconfiguration.planeDetection = ARWorldTrackingConfiguration.PlaneDetection.horizontal
+        self.ARconfiguration.planeDetection = .horizontal
         
         sceneView.session.run(self.ARconfiguration, options: [ARSession.RunOptions.removeExistingAnchors,
                                                               ARSession.RunOptions.resetTracking])
@@ -49,7 +49,8 @@ extension ViewController: ARSKViewDelegate {
             return
         }
         
-        let plane = Plane(anchor: thisAnchor, hidden: false)
+            
+        let plane = Plane(anchor: thisAnchor)
         node.addChildNode(plane)
         self.planes.setValue(plane, forKey: thisAnchor.identifier.uuidString)
         

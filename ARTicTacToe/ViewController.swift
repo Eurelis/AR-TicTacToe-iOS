@@ -211,17 +211,6 @@ class ViewController: UIViewController, ARSCNViewDelegate {
                 self.gameScale = (gameSize / tictactoeSize) / 1.5
                 tictactoeBase.scale = SCNVector3Make(self.gameScale, self.gameScale, self.gameScale)
                 
-                // calculate plane center to insert object
-                let centerX = currentPlane.boundingBox.min.x + (planeWidth / 2)                        // X = DROITE / GAUCHE
-                let centerY = currentPlane.boundingBox.max.y                   // Y = HAUT / BAS
-                let centerZ = currentPlane.boundingBox.min.z + (planeHeight / 2)                       // Z = AVANT / ARRIERE
-                
-                // We insert the geometry slightly above the point the user tapped so that it drops onto the plane using the physics engine
-                tictactoeBase.position = SCNVector3Make(
-                    centerX,
-                    centerY,
-                    centerZ)
-                
                 // Add the object to the plane
                 currentPlane.addChildNode(tictactoeBase)
                 

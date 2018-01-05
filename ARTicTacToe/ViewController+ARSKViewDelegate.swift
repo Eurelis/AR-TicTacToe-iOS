@@ -12,26 +12,20 @@ extension ViewController: ARSKViewDelegate {
     
     // Reseting sceneview session
     func resetSceneViewSession() {
+        self.resetGame()
+        
         self.setStatus(status: "Initializing...")
         self.ARconfiguration.planeDetection = .horizontal
         
-        sceneView.session.run(self.ARconfiguration, options: [ARSession.RunOptions.removeExistingAnchors,
-                                                              ARSession.RunOptions.resetTracking])
+        sceneView.session.run(self.ARconfiguration, options: [.removeExistingAnchors, .resetTracking])
         
-        if self.baseGameObject != nil {
-            self.baseGameObject!.removeFromParentNode()
-            self.baseGameObject = nil
+        for node in self.sceneView.scene.rootNode.childNodes {
+            node.removeFromParentNode()
         }
         
-        if (self.planes.count > 0) {
-            for key in self.planes.allKeys {
-                let thisKey = key as! String
-                if let existingPlane = self.planes.value(forKey: thisKey) as? Plane {
-                    existingPlane.remove()
-                    self.planes.removeObject(forKey: thisKey)
-                }
-            }
-        }
+        self.planes = [:]
+        self.selectedPlane = nil
+        self.gameCells = [:]
         self.setStatus(status: "Scanning for planes - Move around to detect planes")
     }
     

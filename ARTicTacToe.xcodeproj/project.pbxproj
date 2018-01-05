@@ -15,6 +15,7 @@
 		8B1B0EAF1FD6E33D0004A0AF /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8B1B0EAE1FD6E33D0004A0AF /* Assets.xcassets */; };
 		8B1B0EB21FD6E33D0004A0AF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8B1B0EB01FD6E33D0004A0AF /* LaunchScreen.storyboard */; };
 		8B1B0EBB1FD6E60C0004A0AF /* Plane.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B1B0EBA1FD6E60C0004A0AF /* Plane.swift */; };
+		8B9EBEAF1FE91989008876A5 /* CollisionTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B9EBEAE1FE91989008876A5 /* CollisionTypes.swift */; };
 		8BFBAE6F1FDAC9FB00C70179 /* GameCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BFBAE6E1FDAC9FB00C70179 /* GameCell.swift */; };
 /* End PBXBuildFile section */
 
@@ -29,6 +30,7 @@
 		8B1B0EB11FD6E33D0004A0AF /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		8B1B0EB31FD6E33D0004A0AF /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		8B1B0EBA1FD6E60C0004A0AF /* Plane.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Plane.swift; sourceTree = "<group>"; };
+		8B9EBEAE1FE91989008876A5 /* CollisionTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollisionTypes.swift; sourceTree = "<group>"; };
 		8BFBAE6E1FDAC9FB00C70179 /* GameCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameCell.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -67,6 +69,7 @@
 				8B0D100E1FD8242E00D65C5B /* ViewController+ARSKViewDelegate.swift */,
 				8B1B0EBA1FD6E60C0004A0AF /* Plane.swift */,
 				8BFBAE6E1FDAC9FB00C70179 /* GameCell.swift */,
+				8B9EBEAE1FE91989008876A5 /* CollisionTypes.swift */,
 				8B1B0EB91FD6E3C00004A0AF /* Ressources */,
 			);
 			path = ARTicTacToe;
@@ -159,6 +162,7 @@
 			files = (
 				8BFBAE6F1FDAC9FB00C70179 /* GameCell.swift in Sources */,
 				8B1B0EAA1FD6E33D0004A0AF /* ViewController.swift in Sources */,
+				8B9EBEAF1FE91989008876A5 /* CollisionTypes.swift in Sources */,
 				8B0D100F1FD8242E00D65C5B /* ViewController+ARSKViewDelegate.swift in Sources */,
 				8B1B0EBB1FD6E60C0004A0AF /* Plane.swift in Sources */,
 				8B1B0EA61FD6E33D0004A0AF /* AppDelegate.swift in Sources */,

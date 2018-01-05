@@ -10,7 +10,7 @@ import UIKit
 import SceneKit
 import ARKit
 
-class ViewController: UIViewController, ARSCNViewDelegate {
+class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDelegate {
 
     @IBOutlet weak var statusLabel: UILabel!
     @IBOutlet var sceneView: ARSCNView!
@@ -22,8 +22,8 @@ class ViewController: UIViewController, ARSCNViewDelegate {
     // Setting game on selected plane
     var selectedPlane: Plane?
     var gameCells: NSMutableDictionary = [:]
-    var baseGameObject: SCNNode?
-    var gameScale: Float = 1 // Scale will be calculated when setting the game depending on plane size
+    //var baseGameObject: SCNNode?
+    //var gameScale: Float = 1 // Scale will be calculated when setting the game depending on plane size
     
     // During game
     var winner: String?
@@ -40,11 +40,13 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         
         // Set the view's delegate
         sceneView.delegate = self
-        sceneView.debugOptions = [/*.showBoundingBoxes, ARSCNDebugOptions.showWorldOrigin, ARSCNDebugOptions.showFeaturePoints*/]
+        sceneView.scene.physicsWorld.contactDelegate = self
+       //r sceneView.debugOptions = [.showBoundingBoxes, ARSCNDebugOptions.showFeaturePoints /*ARSCNDebugOptions.showWorldOrigin*/]
         
         sceneView.autoenablesDefaultLighting = true
         sceneView.automaticallyUpdatesLighting = true
         
+        self.setWorldBottom()
         self.setStatus(status: "Initializing...")
     }
     
@@ -73,7 +75,7 @@ class ViewController: UIViewController, ARSCNViewDelegate {
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         let touch = touches.first!
         let location = touch.location(in: sceneView)
-        if self.baseGameObject == nil { // If the game is not set, trying to prepare board
+        if self.selectedPlane == nil { // If the game is not set, trying to prepare board
             self.setStatus(status: "Setting game board...")
             setGameAtLocation(location: location)
         } else {
@@ -81,7 +83,7 @@ class ViewController: UIViewController, ARSCNViewDelegate {
             getTappedCell(location: location)
         }
     }
-    
+
     // selects the anchor at the specified location and removes all other unused anchors
     func setGameAtLocation(location: CGPoint) {
         // Hit test result from intersecting with an existing plane anchor, taking into account the plane’s extent.
@@ -112,6 +114,7 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         }
     }
     
+    
     // For testing and fun random uicolor generator
     func generateRandomColor() -> UIColor {
         let hue : CGFloat = CGFloat(arc4random() % 256) / 256 // use 256 to get full range from 0.0 to 1.0
@@ -129,9 +132,13 @@ class ViewController: UIViewController, ARSCNViewDelegate {
             // Retrieving hit location from scene
             let hitTestResults: [SCNHitTestResult] = self.sceneView.hitTest(location, options: [SCNHitTestOption.firstFoundOnly: true])
             if let result = hitTestResults.first { // If there is a result
-
+            
                 let nodeForResult = result.node //returns the detected tapped node on scene
-
+              
+//                let materialDetector = SCNMaterial()
+//                materialDetector.diffuse.contents = self.generateRandomColor()
+//                nodeForResult.geometry?.materials = [materialDetector]
+                
                 // Finding tapped cell from our detectors array
                 for cell in self.gameCells {
                     let thisCell = cell.value as! GameCell
@@ -141,7 +148,8 @@ class ViewController: UIViewController, ARSCNViewDelegate {
                         print ("Hit result : Cell ", thisCell.key)
                         if thisCell.containsElement == nil {
                             // If cell is empty, inserting element
-                            self.insertObjectInCell(cell: thisCell)
+                            
+                            self.insertCube(cell: thisCell)
                         }
                         break
                     }
@@ -159,6 +167,8 @@ class ViewController: UIViewController, ARSCNViewDelegate {
     
     // Restarting game
     func resetGame() {
+        print ("resetting game")
+        
         self.circleCells = []
         self.crossCells = []
         self.playing = 1
@@ -180,7 +190,6 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         }
         
         self.updateGameStatus()
-        self.setGameColor(color: self.generateRandomColor())
     }
     
     
@@ -189,87 +198,92 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         guard let currentPlane = self.selectedPlane else {
             return
         }
+         print ("preparing Game")
         
-        // retrieve base 3D scene element
-        if let tictactoeScene = SCNScene(named: "art.scnassets/tictactoe.scn") {
-            if let tictactoeBase = tictactoeScene.rootNode.childNode(withName: "base", recursively: false)  {
-                
-                // TODO: update this with real material later to make it look better
-                let material = SCNMaterial()
-                material.diffuse.contents = self.generateRandomColor()
-                tictactoeBase.geometry!.materials = [material]
-                
-                // Retrieve real object width (which is the same as height as it is a square)
-                let tictactoeSize = tictactoeBase.boundingBox.max.x - tictactoeBase.boundingBox.min.x
-                
-                // Retrieve plane width and height to calculate center and rescale element
-                let planeWidth = Float(currentPlane.planeGeometry!.width)
-                let planeLength = Float(currentPlane.planeGeometry!.length)
-                
-                // Rescale 3D object to match plane sizes
-                let gameSize = planeWidth < planeLength ? planeWidth : planeLength
-                self.gameScale = (gameSize / tictactoeSize) / 1.5
-                tictactoeBase.scale = SCNVector3Make(self.gameScale, self.gameScale, self.gameScale)
-                
-                // Add the object to the plane
-                currentPlane.addChildNode(tictactoeBase)
-                
-                self.baseGameObject = tictactoeBase
-                self.setGameCells()
-            }
-        }
+        // Create grille
+        let size: CGFloat = 0.008
+        let length = currentPlane.planeGeometry!.width / 2
+        let cellSize = Float(length) / 3
+        let onethird = cellSize / 2
+        let zPosition = Float(currentPlane.planeGeometry!.height + (size / 2))
+
+        let material = SCNMaterial()
+        material.diffuse.contents = UIColor.red
+
+        let bar = SCNBox(width: size, height: size, length: length, chamferRadius: 0)
+        let nodeBar1 = SCNNode(geometry: bar)
+        nodeBar1.geometry!.materials = [material]
+        nodeBar1.position = SCNVector3Make(-onethird, zPosition, 0)
+
+        let bar2 = SCNBox(width: size, height: size, length: length, chamferRadius: 0)
+        let nodeBar2 = SCNNode(geometry: bar2)
+        nodeBar2.geometry!.materials = [material]
+        nodeBar2.position = SCNVector3Make(onethird, zPosition, 0)
+
+
+        let bar3 = SCNBox(width: length, height: size, length: size, chamferRadius: 0)
+        let nodeBar3 = SCNNode(geometry: bar3)
+        nodeBar3.geometry!.materials = [material]
+        nodeBar3.position = SCNVector3Make(0, zPosition, -onethird)
+
+
+        let bar4 = SCNBox(width: length, height: size, length: size, chamferRadius: 0)
+        let nodeBar4 = SCNNode(geometry: bar4)
+        nodeBar4.geometry!.materials = [material]
+        nodeBar4.position = SCNVector3Make(0, zPosition, onethird)
+
+        currentPlane.addChildNode(nodeBar1)
+        currentPlane.addChildNode(nodeBar2)
+        currentPlane.addChildNode(nodeBar3)
+        currentPlane.addChildNode(nodeBar4)
+
+        self.setGameCells(cellSize: cellSize)
     }
     
     // Calculating and setting cell "detectors"
-    func setGameCells() {
-        guard let baseGameElement = self.baseGameObject else {
-            return
-        }
-        
-        let baseGameSize = (baseGameElement.boundingBox.max.x - baseGameElement.boundingBox.min.x) * self.gameScale
-        let borderWidth: Float = 2.0 * self.gameScale
-        let cellSize: Float  = (baseGameSize - borderWidth) / 3
-        
-        let baseCenterX = self.baseGameObject!.position.x
-        let baseCenterY = self.baseGameObject!.position.y
-        
+    func setGameCells(cellSize: Float) {
+        print ("settingGameCells")
         // TOP LEFT
-        self.addPlaneDetector(key: "1", cellSize: cellSize, centerX: baseCenterX - cellSize, centerY: baseCenterY + cellSize)
-        
+        self.addPlaneDetector(key: "1", cellSize: cellSize, centerX: cellSize, centerY: cellSize)
+
         // TOP MIDDLE
-        self.addPlaneDetector(key: "2", cellSize: cellSize, centerX: baseCenterX - cellSize, centerY: baseCenterY)
-        
+        self.addPlaneDetector(key: "2", cellSize: cellSize, centerX: cellSize, centerY: 0)
+
         // TOP RIGHT
-        self.addPlaneDetector(key: "3", cellSize: cellSize, centerX: baseCenterX - cellSize, centerY: baseCenterY - cellSize)
-        
+        self.addPlaneDetector(key: "3", cellSize: cellSize, centerX: cellSize, centerY: -cellSize)
+
         // MIDDLE LEFT
-        self.addPlaneDetector(key: "4", cellSize: cellSize, centerX: baseCenterX, centerY: baseCenterY + cellSize)
-        
+        self.addPlaneDetector(key: "4", cellSize: cellSize, centerX: 0, centerY: cellSize)
+
         // MIDDLE
-        self.addPlaneDetector(key: "5", cellSize: cellSize, centerX: baseCenterX, centerY: baseCenterY)
-        
+        self.addPlaneDetector(key: "5", cellSize: cellSize, centerX: 0, centerY: 0)
+
         // MIDDLE RIGHT
-        self.addPlaneDetector(key: "6", cellSize: cellSize, centerX: baseCenterX, centerY: baseCenterY - cellSize)
-        
+        self.addPlaneDetector(key: "6", cellSize: cellSize, centerX: 0, centerY: -cellSize)
+
         // BOTTOM LEFT
-        self.addPlaneDetector(key: "7", cellSize: cellSize, centerX: baseCenterX + cellSize, centerY: baseCenterY + cellSize)
-        
+        self.addPlaneDetector(key: "7", cellSize: cellSize, centerX: -cellSize, centerY: cellSize)
+
         // BOTTOM MIDDLE
-        self.addPlaneDetector(key: "8", cellSize: cellSize, centerX: baseCenterX + cellSize, centerY: baseCenterY)
-        
+        self.addPlaneDetector(key: "8", cellSize: cellSize, centerX: -cellSize, centerY: 0)
+
         // BOTTOM RIGHT
-        self.addPlaneDetector(key: "9", cellSize: cellSize, centerX: baseCenterX + cellSize, centerY: baseCenterY - cellSize)
-        
+        self.addPlaneDetector(key: "9", cellSize: cellSize, centerX: -cellSize, centerY: -cellSize)
+
         self.setStatus(status: "Waiting for X to play")
     }
     
     // Adding detectors in cells
     func addPlaneDetector(key: String, cellSize: Float, centerX: Float, centerY: Float) {
-        let formattedCellSize = CGFloat(cellSize)
+        guard let currentPlane = self.selectedPlane else {
+            return
+        }
         
+        let formattedCellSize = CGFloat(cellSize) / 1.5
+
         // Creating a detector plane in a node
-        let detectorPlane = SCNPlane(width: formattedCellSize / 2, height: formattedCellSize / 2)
-        let detector = SCNNode(geometry: detectorPlane)
+        let detectorBox = SCNBox(width: formattedCellSize, height: formattedCellSize, length: formattedCellSize, chamferRadius: 0)
+        let detector = SCNNode(geometry: detectorBox)
        
         // Transparent color for detector planes
         let materialDetector = SCNMaterial()
@@ -277,29 +291,85 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         detector.geometry!.materials = [materialDetector]
         
         // We need to set the detector planes slightly higher than the board object so that it can detect touch
-        let heightPosition = (self.baseGameObject!.boundingBox.max.z * self.gameScale) + 0.01
-        
+        let zPosition: Float = Float(formattedCellSize) / 2
+
         detector.position = SCNVector3Make(
             centerX,
-            heightPosition,
+            zPosition,
             centerY)
-      
-        // Default planes are vertical, rotating it to be horizontal
-        let angleRotation = Float(-Double.pi / 2.0)
-        detector.rotation = SCNVector4Make(1, 0, 0, angleRotation);
+    
         
         // Adding detector to scene
-        self.selectedPlane!.addChildNode(detector)
-        
+        currentPlane.addChildNode(detector)
+
         // Saving cell for later use
         self.gameCells.setValue(GameCell(key: key, detector: detector), forKey: key) // Adding gamecell to local array
     }
     
     
-    // Insert game element in selected cell
-    func insertObjectInCell(cell: GameCell) {
+    
+    
+    func insertCube(cell: GameCell) {
+        guard let currentPlane = self.selectedPlane else {
+            return
+        }
+        
+        let cellWidth = cell.detector.boundingBox.max.x - cell.detector.boundingBox.min.x
+        let cellHeight = cell.detector.boundingBox.max.y - cell.detector.boundingBox.min.y
+        
+       // let size = CGFloat(cell.detector.boundingBox.max.x)
+        let size = CGFloat(cellWidth)
+        let cube = SCNBox(width: size, height: CGFloat(cellHeight), length: size, chamferRadius: 0)
+        
+        let material = SCNMaterial()
+        material.diffuse.contents = UIColor.white.withAlphaComponent(0)
+        cube.materials = [material]
+        
+        let cubeNode = SCNNode(geometry: cube)
+        
+        //let yPosition = Float(currentPlane.planeGeometry!.height + cube.height)
+        let yDropPosition: Float = 0.1
+        cubeNode.position = SCNVector3Make(cell.detector.position.x,
+                                           cell.detector.position.y + yDropPosition,
+                                           cell.detector.position.z)
+        
+        
+        let shape = SCNPhysicsShape(geometry: cube, options: nil)
+        let physicsBody = SCNPhysicsBody(type: .dynamic, shape: shape)
+        physicsBody.mass = 1.0
+        physicsBody.restitution = 0.5
+        physicsBody.friction = 1.0
+        physicsBody.categoryBitMask = CollisionTypes.shape.rawValue
+        
+        cubeNode.physicsBody = physicsBody
+        
+        
+        // ADD game element
         // Defining player (TODO: let player choose it's color and play against an AI)
         let player = self.playing % 2 == 0 ? "circle" : "cross" // circle playing on pair numbers
+        
+        if let playerElement = self.getPlayerObject(player: player, container: cubeNode) {
+            
+            cubeNode.addChildNode(playerElement)
+            cell.setContains(node: cubeNode, type: player)
+            
+            if player == "cross" {
+                self.crossCells.add(cell.key)
+            } else {
+                self.circleCells.add(cell.key)
+            }
+            
+            self.playing = self.playing + 1
+            self.updateGameStatus()
+            
+            currentPlane.addChildNode(cubeNode)
+        }
+        
+    }
+    
+    
+    // Insert game element in selected cell
+    func getPlayerObject(player: String, container: SCNNode) -> SCNNode? {
         
         // Retrieving 3D element (note that this could be done by simply inserting an SCNText node too)
         if let tictactoeScene = SCNScene(named: "art.scnassets/"+player+".scn") {
@@ -317,30 +387,21 @@ class ViewController: UIViewController, ARSCNViewDelegate {
                 }
                 tictactoeElement.geometry!.materials = [material]
                 
-                // TODO: add some physics to the game objects to make them "fall" on the board
-                // Setting physics so the element will fall on the game - just for fun
-                //tictactoeElement.physicsBody = SCNPhysicsBody(type: .dynamic, shape: nil)
-                //tictactoeElement.physicsBody!.mass = 2.0
-                //tictactoeElement.physicsBody!.categoryBitMask = 1 << 1
+                // Calculate scale for elements
+                let elementSize = tictactoeElement.boundingBox.max.x - tictactoeElement.boundingBox.min.x
+                let containerSize = container.boundingBox.max.x - container.boundingBox.min.x
                 
-                // Rescale the element to match board size & position it in cell
-                tictactoeElement.scale = SCNVector3Make(self.gameScale, self.gameScale, self.gameScale)
-                tictactoeElement.position = SCNVector3Make(cell.detector.position.x, 0, cell.detector.position.z)
-               
-                self.selectedPlane!.addChildNode(tictactoeElement)
+                let scale = containerSize / elementSize
+                tictactoeElement.scale = SCNVector3Make(scale, scale, scale)
                 
-                // Update cell element with player color, and fill arrays for result calculation
-                cell.setContains(node: tictactoeElement, type: player)
-                if player == "cross" {
-                    self.crossCells.add(cell.key)
-                } else {
-                    self.circleCells.add(cell.key)
-                }
-               
-                self.playing = self.playing + 1
-                self.updateGameStatus()
+                let elementHeight = tictactoeElement.boundingBox.max.z - tictactoeElement.boundingBox.min.z
+                let elementHeightScaled = elementHeight * scale
+                tictactoeElement.position.y = container.boundingBox.min.y + elementHeightScaled
+                
+               return tictactoeElement
             }
         }
+        return nil
     }
     
     
@@ -430,13 +491,16 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         setStatus(status: "Game is over : \(text) - Tap anywhere to restart")
         
         // Drop 3D text on game set
-        self.setGameColor(color: UIColor.lightGray)
         self.draw3DText(text: text)
     }
     
     // Draw winning 3D Text
     func draw3DText(text: String) {
-        let baseGameSize = (self.baseGameObject!.boundingBox.max.x - self.baseGameObject!.boundingBox.min.x) * self.gameScale
+        guard let currentPlane = self.selectedPlane else {
+            return
+        }
+        
+        let baseGameSize = Float(currentPlane.planeGeometry!.width) / 2
         let maxLength = baseGameSize / 3.5
         
         // Creating a custom SCNText, extrusionDepth defines the text depth
@@ -444,44 +508,91 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         let textNode = SCNNode(geometry: scnTxt)
         
         // Calculating text scale
-        let textSize = textNode.boundingBox.max.x - textNode.boundingBox.min.x
-        let textScale = (baseGameSize / textSize)
+        let textLength = textNode.boundingBox.max.x - textNode.boundingBox.min.x
+        let textScale = baseGameSize / textLength
         textNode.scale = SCNVector3Make(textScale, textScale, 1)
+
+        let halfLength = textLength / 2
+        let scaledHalfLength = halfLength * textScale
+        textNode.position.x = -scaledHalfLength
+
+        let textHeight = textNode.boundingBox.max.y - textNode.boundingBox.min.y
+        let halfHeight = textHeight / 2
+        let scaledHalfHeight = halfHeight * textScale
+        textNode.position.y = scaledHalfHeight
         
-        // Calculating position
-        let centerX = self.baseGameObject!.position.x - ((textSize * textScale) / 2)
-        let centerY = self.baseGameObject!.position.y + 0.05
-        let centerZ = self.baseGameObject!.position.z
-        
-        textNode.position = SCNVector3Make(centerX, centerY, centerZ)
-        
-        self.selectedPlane!.addChildNode(textNode)
+        currentPlane.addChildNode(textNode)
         self.winTextNode = textNode
         
         // Just for fun, changing text color every 0.2 seconds
-        self.winningTextTimer = Timer.scheduledTimer(withTimeInterval: 0.2, repeats: true) { (timer) in
+        self.winningTextTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { (timer) in
             let material = SCNMaterial()
             material.diffuse.contents = self.generateRandomColor()
             self.winTextNode!.geometry!.materials = [material]
+            
+            self.explodePiece() // Explosion in random cell
         }
     }
     
-    // Setting game elements' color
-    func setGameColor (color: UIColor) {
-        let material = SCNMaterial()
-        material.diffuse.contents = color
+    var cellExploded = 0
+    func explodePiece() {
         
-        if self.baseGameObject != nil && self.baseGameObject?.geometry != nil {
-            self.baseGameObject!.geometry!.materials = [material]
+        self.cellExploded = self.cellExploded + 1
+
+        if self.cellExploded == 10 {
+            self.cellExploded = 1
         }
         
-        for cell in self.gameCells {
-            let thisCell = cell.value as! GameCell
-            if thisCell.containsElement != nil {
-                thisCell.containsElement!.geometry!.materials = [material]
+        let thisCell = self.gameCells.value(forKey: String(self.cellExploded)) as! GameCell
+        if let particleSystem = SCNParticleSystem(named: "Explosion", inDirectory: "art.scnassets/Explosion") {
+            let systemNode = SCNNode()
+            particleSystem.particleColor = self.generateRandomColor()
+            systemNode.addParticleSystem(particleSystem)
+            thisCell.detector.addChildNode(systemNode)
+            
+            thisCell.emptyCell()
+        }
+    }
+    
+    
+    func setWorldBottom() {
+        
+        // Use a huge size to cover the entire world
+        let bottomPlane = SCNBox(width: 1000, height: 0.005, length: 1000, chamferRadius: 0)
+        
+        // Use a clear material so the body is not visible
+        let material = SCNMaterial()
+        material.diffuse.contents = UIColor(white: 1.0, alpha: 0.0)
+        bottomPlane.materials = [material]
+        
+        // Position 10 meters below the floor
+        let bottomNode = SCNNode(geometry: bottomPlane)
+        bottomNode.position = SCNVector3(x: 0, y: -10, z: 0)
+        
+        // Apply kinematic physics, and collide with shape categories
+        let physicsBody = SCNPhysicsBody.static()
+        physicsBody.categoryBitMask = CollisionTypes.bottom.rawValue
+        physicsBody.contactTestBitMask = CollisionTypes.shape.rawValue
+        bottomNode.physicsBody = physicsBody
+        
+        self.sceneView.scene.rootNode.addChildNode(bottomNode)
+    }
+    
+    // MARK: - SCNPhysicsContactDelegate
+    
+    func physicsWorld(_ world: SCNPhysicsWorld, didBegin contact: SCNPhysicsContact) {
+        let mask = contact.nodeA.physicsBody!.categoryBitMask | contact.nodeB.physicsBody!.categoryBitMask
+        
+        if CollisionTypes(rawValue: mask) == [CollisionTypes.bottom, CollisionTypes.shape] {
+            // Contact avec le bottom
+            if contact.nodeA.physicsBody!.categoryBitMask == CollisionTypes.bottom.rawValue {
+                contact.nodeB.removeFromParentNode()
+                print ("an object reached the bottom and was removed")
+            } else if contact.nodeB.physicsBody!.categoryBitMask == CollisionTypes.bottom.rawValue {
+                contact.nodeA.removeFromParentNode()
+                print ("an object reached the bottom and was removed")
             }
         }
     }
-    
     
 }

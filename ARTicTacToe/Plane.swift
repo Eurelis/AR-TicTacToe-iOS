@@ -21,28 +21,24 @@ class Plane: SCNNode {
         super.init()
         
         self.planeGeometry = SCNBox(width: CGFloat(anchor.extent.x),
-                                    height: 0.005,
+                                    height: 0.01,
                                     length: CGFloat(anchor.extent.z),
                                     chamferRadius: 0)
-        
-        // Ajout d'une couleur à la SCNBox, pour aider la visualisation, ici nous utilisons un UIColor
-        // mais nous aurions pu utiliser un UIImage ou autre élément visuel
-        let material = SCNMaterial()
-        material.diffuse.contents = UIImage(named: "grid2")
-        self.planeGeometry!.materials = [material]
-        
-        // Enfin, nous créons un nouvel objet SCNNode correspondant au format de la SCNBox,
-        // afin de pouvoir la manipuler et l'ajouter à la scene
-        let planeNode = SCNNode(geometry: self.planeGeometry!)
-        planeNode.position = SCNVector3Make(anchor.center.x, anchor.center.y, anchor.center.z)
-        
+
+        self.position = SCNVector3Make(anchor.center.x, anchor.center.y, anchor.center.z)
+        self.geometry = self.planeGeometry
+
+        let materialParent = SCNMaterial()
+        materialParent.diffuse.contents = UIImage(named: "grid2")
+        self.geometry!.materials = [materialParent]
+
+
+        // PHYSICS
         let planePhysics = SCNPhysicsBody(type: .kinematic, shape: SCNPhysicsShape(geometry: self.planeGeometry!, options: nil))
         planePhysics.friction = 1.0
         planePhysics.categoryBitMask = CollisionTypes.plane.rawValue
         planePhysics.contactTestBitMask = CollisionTypes.shape.rawValue
-        planeNode.physicsBody = planePhysics
-        
-        self.addChildNode(planeNode)
+        self.physicsBody = planePhysics
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -52,7 +48,7 @@ class Plane: SCNNode {
     // Defines plane as selected to insert the game's board
     func setSelected() {
         let material = SCNMaterial()
-        material.diffuse.contents = UIColor.white.withAlphaComponent(0.5) // the plane will be invisible
+        material.diffuse.contents = UIColor.white.withAlphaComponent(0.2)
         self.planeGeometry!.materials = [material]
         self.isSelected = true
     }
@@ -69,7 +65,7 @@ class Plane: SCNNode {
         
         // When the plane is first created it's center is 0,0,0 and the nodes transform contains the translation parameters.
         // As the plane is updated the planes translation remains the same but it's center is updated so we need to update the 3D geometry position
-        self.position = SCNVector3Make(anchor.center.x, 0.005, anchor.center.z)
+        self.position = SCNVector3Make(anchor.center.x, anchor.center.y, anchor.center.z)
     }
     
     

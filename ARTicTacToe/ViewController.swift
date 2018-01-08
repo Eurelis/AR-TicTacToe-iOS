@@ -22,10 +22,10 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
     // Setting game on selected plane
     var selectedPlane: Plane?
     var gameCells: NSMutableDictionary = [:]
-    //var baseGameObject: SCNNode?
-    //var gameScale: Float = 1 // Scale will be calculated when setting the game depending on plane size
     
     // During game
+    //var gameMode =
+    
     var winner: String?
     var playing: Int = 1 // Defines which player is playing
     var crossCells: NSMutableArray = []
@@ -41,7 +41,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
         // Set the view's delegate
         sceneView.delegate = self
         sceneView.scene.physicsWorld.contactDelegate = self
-       //r sceneView.debugOptions = [.showBoundingBoxes, ARSCNDebugOptions.showFeaturePoints /*ARSCNDebugOptions.showWorldOrigin*/]
+        sceneView.debugOptions = [/*.showBoundingBoxes,*/ ARSCNDebugOptions.showFeaturePoints /*ARSCNDebugOptions.showWorldOrigin*/]
         
         sceneView.autoenablesDefaultLighting = true
         sceneView.automaticallyUpdatesLighting = true
@@ -201,33 +201,35 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
          print ("preparing Game")
         
         // Create grille
-        let size: CGFloat = 0.008
+        
         let length = currentPlane.planeGeometry!.width / 2
-        let cellSize = Float(length) / 3
-        let onethird = cellSize / 2
-        let zPosition = Float(currentPlane.planeGeometry!.height + (size / 2))
+        let cellSize = length / 3
+        let onethird = Float(cellSize) / 2
+        
+        let width = cellSize / 10
+        let zPosition = Float(currentPlane.planeGeometry!.height + (width / 2))
 
         let material = SCNMaterial()
         material.diffuse.contents = UIColor.red
 
-        let bar = SCNBox(width: size, height: size, length: length, chamferRadius: 0)
+        let bar = SCNBox(width: width, height: width, length: length, chamferRadius: 0)
         let nodeBar1 = SCNNode(geometry: bar)
         nodeBar1.geometry!.materials = [material]
         nodeBar1.position = SCNVector3Make(-onethird, zPosition, 0)
 
-        let bar2 = SCNBox(width: size, height: size, length: length, chamferRadius: 0)
+        let bar2 = SCNBox(width: width, height: width, length: length, chamferRadius: 0)
         let nodeBar2 = SCNNode(geometry: bar2)
         nodeBar2.geometry!.materials = [material]
         nodeBar2.position = SCNVector3Make(onethird, zPosition, 0)
 
 
-        let bar3 = SCNBox(width: length, height: size, length: size, chamferRadius: 0)
+        let bar3 = SCNBox(width: length, height: width, length: width, chamferRadius: 0)
         let nodeBar3 = SCNNode(geometry: bar3)
         nodeBar3.geometry!.materials = [material]
         nodeBar3.position = SCNVector3Make(0, zPosition, -onethird)
 
 
-        let bar4 = SCNBox(width: length, height: size, length: size, chamferRadius: 0)
+        let bar4 = SCNBox(width: length, height: width, length: width, chamferRadius: 0)
         let nodeBar4 = SCNNode(geometry: bar4)
         nodeBar4.geometry!.materials = [material]
         nodeBar4.position = SCNVector3Make(0, zPosition, onethird)
@@ -241,7 +243,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
     }
     
     // Calculating and setting cell "detectors"
-    func setGameCells(cellSize: Float) {
+    func setGameCells(cellSize: CGFloat) {
         print ("settingGameCells")
         // TOP LEFT
         self.addPlaneDetector(key: "1", cellSize: cellSize, centerX: cellSize, centerY: cellSize)
@@ -274,12 +276,12 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
     }
     
     // Adding detectors in cells
-    func addPlaneDetector(key: String, cellSize: Float, centerX: Float, centerY: Float) {
+    func addPlaneDetector(key: String, cellSize: CGFloat, centerX: CGFloat, centerY: CGFloat) {
         guard let currentPlane = self.selectedPlane else {
             return
         }
         
-        let formattedCellSize = CGFloat(cellSize) / 1.5
+        let formattedCellSize = cellSize / 1.5
 
         // Creating a detector plane in a node
         let detectorBox = SCNBox(width: formattedCellSize, height: formattedCellSize, length: formattedCellSize, chamferRadius: 0)
@@ -291,12 +293,12 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
         detector.geometry!.materials = [materialDetector]
         
         // We need to set the detector planes slightly higher than the board object so that it can detect touch
-        let zPosition: Float = Float(formattedCellSize) / 2
+        let zPosition = formattedCellSize / 2
 
         detector.position = SCNVector3Make(
-            centerX,
-            zPosition,
-            centerY)
+            Float(centerX),
+            Float(zPosition),
+            Float(centerY))
     
         
         // Adding detector to scene

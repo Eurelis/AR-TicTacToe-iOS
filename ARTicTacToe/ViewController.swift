@@ -24,10 +24,17 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
     var gameCells: NSMutableDictionary = [:]
     
     // During game
-    //var gameMode =
+    var playing: Int = 1 // Defines which player is playing
+    
+    var playerOne: String = "human"
+    @IBOutlet weak var playerOneButton: UIButton!
+    @IBOutlet weak var playerOneHeightConstraint: NSLayoutConstraint!
+    
+    var playerTwo: String = "robot"
+    @IBOutlet weak var playerTwoButton: UIButton!
+    @IBOutlet weak var playerTwoHeightConstraint: NSLayoutConstraint!
     
     var winner: String?
-    var playing: Int = 1 // Defines which player is playing
     var crossCells: NSMutableArray = []
     var circleCells: NSMutableArray = []
     
@@ -46,13 +53,16 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
         sceneView.autoenablesDefaultLighting = true
         sceneView.automaticallyUpdatesLighting = true
         
-        self.setWorldBottom()
         self.setStatus(status: "Initializing...")
+        self.resetSceneViewSession()
+        self.setWorldBottom()
+       
+       // self.setCurrentPlayer(player: "both")
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        self.resetSceneViewSession()
+        sceneView.session.run(self.ARconfiguration)
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -67,9 +77,30 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
         // Release any cached data, images, etc that aren't in use.
     }
     
+    @IBAction func switchModePlayerOne(_ sender: Any) {
+        
+        //TODO add popup when game is set : confirm change and restart game?
+        let newMode = self.playerOne == "human" ? "robot":"human"
+        self.playerOne = newMode
+        
+        print ("switchModePlayerOne to ", newMode)
+        self.playerOneButton.setImage(UIImage(named: newMode), for: .normal)
+    }
+    
+    @IBAction func switchModePlayerTwo(_ sender: Any) {
+         //TODO add popup when game is set : confirm change and restart game?
+        let newMode = self.playerTwo == "human" ? "robot":"human"
+        self.playerTwo = newMode
+        
+        print ("switchModePlayerTwo to ", newMode)
+        self.playerTwoButton.setImage(UIImage(named: newMode), for: .normal)
+    }
+    
     func setStatus(status: String) {
         self.statusLabel.text = status
     }
+    
+    
     
     // Detecting when sceneview is tapped
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -133,11 +164,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
             let hitTestResults: [SCNHitTestResult] = self.sceneView.hitTest(location, options: [SCNHitTestOption.firstFoundOnly: true])
             if let result = hitTestResults.first { // If there is a result
             
-                let nodeForResult = result.node //returns the detected tapped node on scene
-              
-//                let materialDetector = SCNMaterial()
-//                materialDetector.diffuse.contents = self.generateRandomColor()
-//                nodeForResult.geometry?.materials = [materialDetector]
+                let nodeForResult = result.node //returns the detected tap
                 
                 // Finding tapped cell from our detectors array
                 for cell in self.gameCells {
@@ -169,9 +196,14 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
     func resetGame() {
         print ("resetting game")
         
+        for cell in self.gameCells {
+            let thisCell = cell.value as! GameCell
+            thisCell.detector.removeAllParticleSystems()
+            thisCell.emptyCell()
+        }
+        
         self.circleCells = []
         self.crossCells = []
-        self.playing = 1
         self.winner = nil
         
         if (self.winningTextTimer != nil) {
@@ -184,12 +216,41 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
             self.winTextNode = nil
         }
         
-        for cell in self.gameCells {
-            let thisCell = cell.value as! GameCell
-            thisCell.emptyCell()
+        self.setCurrentPlayer(player: "cross")
+        self.playing = 1
+        self.updateGameStatus()
+    }
+    
+    private func setCurrentPlayer(player: String?) {
+        print ("setCurrentPlayer")
+        
+        let activePlayerAlpha: CGFloat = 0.9
+        let activePlayerHeight: CGFloat = 40
+        let inactivePlayerAlpha: CGFloat = 0.2
+        let inactivePlayerHeight: CGFloat = 30
+        
+        var currentPlayer = player
+        if player == nil {
+            self.playing = self.playing + 1
+            currentPlayer = self.playing % 2 == 0 ? "circle" : "cross" // circle playing on pair numbers
         }
         
-        self.updateGameStatus()
+        self.playerOneButton.alpha = inactivePlayerAlpha
+        self.playerOneHeightConstraint.constant = inactivePlayerHeight
+        self.playerTwoButton.alpha = inactivePlayerAlpha
+        self.playerTwoHeightConstraint.constant = inactivePlayerHeight
+        
+        if currentPlayer == "cross" {
+            self.playerOneButton.alpha = activePlayerAlpha
+            self.playerOneHeightConstraint.constant = activePlayerHeight
+        }
+        else {
+            self.playerTwoButton.alpha = activePlayerAlpha
+            self.playerTwoHeightConstraint.constant = activePlayerHeight
+        }
+    
+        let player: String = currentPlayer == "circle" ? "O":"X"
+        self.setStatus(status: "Waiting for \(player) to play")
     }
     
     
@@ -272,7 +333,9 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
         // BOTTOM RIGHT
         self.addPlaneDetector(key: "9", cellSize: cellSize, centerX: -cellSize, centerY: -cellSize)
 
+        // TODO remove status bar ?
         self.setStatus(status: "Waiting for X to play")
+        self.setCurrentPlayer(player: "cross")
     }
     
     // Adding detectors in cells
@@ -345,11 +408,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
         
         cubeNode.physicsBody = physicsBody
         
-        
-        // ADD game element
-        // Defining player (TODO: let player choose it's color and play against an AI)
         let player = self.playing % 2 == 0 ? "circle" : "cross" // circle playing on pair numbers
-        
         if let playerElement = self.getPlayerObject(player: player, container: cubeNode) {
             
             cubeNode.addChildNode(playerElement)
@@ -361,7 +420,8 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
                 self.circleCells.add(cell.key)
             }
             
-            self.playing = self.playing + 1
+            
+            self.setCurrentPlayer(player: nil)
             self.updateGameStatus()
             
             currentPlane.addChildNode(cubeNode)
@@ -420,8 +480,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
         
         
         if (!gameIsOver && self.winner == nil) {
-            let player: String = self.playing % 2 == 0 ? "O":"X"
-            self.setStatus(status: "Waiting for \(player) to play")
+            //self.setCurrentPlayer(player: nil)
         } else {
             self.endGame()
         }

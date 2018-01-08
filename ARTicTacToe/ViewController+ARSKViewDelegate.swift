@@ -12,8 +12,6 @@ extension ViewController: ARSKViewDelegate {
     
     // Reseting sceneview session
     func resetSceneViewSession() {
-        self.resetGame()
-        
         self.setStatus(status: "Initializing...")
         self.ARconfiguration.planeDetection = .horizontal
         

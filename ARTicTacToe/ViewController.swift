@@ -24,15 +24,27 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
     var gameCells: NSMutableDictionary = [:]
     
     // During game
-    var playing: Int = 1 // Defines which player is playing
+    // possible winning sequences
+    let winningSequences = [
+        [1, 2, 3],
+        [1, 4, 7],
+        [1, 5, 9],
+        [2, 5, 8],
+        [3, 5, 7],
+        [3, 6, 9],
+        [4, 5, 6],
+        [7, 8, 9]
+    ]
     
-    var playerOne: String = "human"
-    @IBOutlet weak var playerOneButton: UIButton!
-    @IBOutlet weak var playerOneHeightConstraint: NSLayoutConstraint!
+    var playing: String = "cross" // Defines which player is playing
     
-    var playerTwo: String = "robot"
-    @IBOutlet weak var playerTwoButton: UIButton!
-    @IBOutlet weak var playerTwoHeightConstraint: NSLayoutConstraint!
+    var playerCross: String = "human"
+    @IBOutlet weak var playerCrossButton: UIButton!
+    @IBOutlet weak var playerCrossHeightConstraint: NSLayoutConstraint!
+    
+    var playerCircle: String = "human"
+    @IBOutlet weak var playerCircleButton: UIButton!
+    @IBOutlet weak var playerCircleHeightConstraint: NSLayoutConstraint!
     
     var winner: String?
     var crossCells: NSMutableArray = []
@@ -56,8 +68,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
         self.setStatus(status: "Initializing...")
         self.resetSceneViewSession()
         self.setWorldBottom()
-       
-       // self.setCurrentPlayer(player: "both")
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -77,23 +87,46 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
         // Release any cached data, images, etc that aren't in use.
     }
     
-    @IBAction func switchModePlayerOne(_ sender: Any) {
-        
-        //TODO add popup when game is set : confirm change and restart game?
-        let newMode = self.playerOne == "human" ? "robot":"human"
-        self.playerOne = newMode
-        
-        print ("switchModePlayerOne to ", newMode)
-        self.playerOneButton.setImage(UIImage(named: newMode), for: .normal)
+    @IBAction func switchModePlayerCross(_ sender: Any) {
+        self.switchConfirmDialog(completion: {() -> Void in
+            let newMode = self.playerCross == "human" ? "robot":"human"
+            self.playerCross = newMode
+            
+            print ("switchModePlayerCross to ", newMode)
+            self.playerCrossButton.setImage(UIImage(named: newMode), for: .normal)
+        })
     }
     
-    @IBAction func switchModePlayerTwo(_ sender: Any) {
-         //TODO add popup when game is set : confirm change and restart game?
-        let newMode = self.playerTwo == "human" ? "robot":"human"
-        self.playerTwo = newMode
+    @IBAction func switchModePlayerCircle(_ sender: Any) {
+        self.switchConfirmDialog(completion: {() -> Void in
+            let newMode = self.playerCircle == "human" ? "robot":"human"
+            self.playerCircle = newMode
+            
+            print ("switchModePlayerCircle to ", newMode)
+            self.playerCircleButton.setImage(UIImage(named: newMode), for: .normal)
+        })
+    }
+    
+    private func switchConfirmDialog(completion: @escaping () -> Void) {
         
-        print ("switchModePlayerTwo to ", newMode)
-        self.playerTwoButton.setImage(UIImage(named: newMode), for: .normal)
+        if selectedPlane != nil { // show confirm dialog only if a game is already set
+            let alert = UIAlertController(title: "Restart game ?", message: "Confirm player mode switch ? This will restart the current game.", preferredStyle: .alert)
+            let clearAction = UIAlertAction(title: "Restart", style: .default) { (alert: UIAlertAction!) -> Void in
+                completion()
+                self.resetGame()
+            }
+            let cancelAction = UIAlertAction(title: "Cancel", style: .cancel) { (alert: UIAlertAction!) -> Void in
+                //print("You pressed Cancel")
+            }
+            
+            alert.addAction(clearAction)
+            alert.addAction(cancelAction)
+            
+            present(alert, animated: true, completion:nil)
+        }
+        else {
+            completion()
+        }
     }
     
     func setStatus(status: String) {
@@ -110,8 +143,20 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
             self.setStatus(status: "Setting game board...")
             setGameAtLocation(location: location)
         } else {
-            // If the game is already set, calculating tapped cell
-            getTappedCell(location: location)
+            let nbPlays = self.crossCells.count + self.circleCells.count
+            if (nbPlays == 9 || self.winner != nil) { // we only need to calculate if game is not finished
+                self.resetGame() // restarting game
+            }
+            else {
+                // If the game is already set, calculating tapped cell
+                let typePlayer = self.playing == "cross" ? self.playerCross : self.playerCircle
+                if typePlayer == "human" {
+                    getTappedCell(location: location)
+                } else {
+                    print ("cannot play! waiting for AI to play")
+                }
+            }
+           
         }
     }
 
@@ -156,32 +201,28 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
     
     // Find which GameCell has beep tapped from hittest result on scene
     func getTappedCell(location: CGPoint) {
-        if (self.playing > 9 || self.winner != nil) { // we only need to calculate if game is not finished
-            self.resetGame() // restarting game
-        }
-        else {
-            // Retrieving hit location from scene
-            let hitTestResults: [SCNHitTestResult] = self.sceneView.hitTest(location, options: [SCNHitTestOption.firstFoundOnly: true])
-            if let result = hitTestResults.first { // If there is a result
+       
+        // Retrieving hit location from scene
+        let hitTestResults: [SCNHitTestResult] = self.sceneView.hitTest(location, options: [SCNHitTestOption.firstFoundOnly: true])
+        if let result = hitTestResults.first { // If there is a result
+        
+            let nodeForResult = result.node //returns the detected tap
             
-                let nodeForResult = result.node //returns the detected tap
+            // Finding tapped cell from our detectors array
+            for cell in self.gameCells {
+                let thisCell = cell.value as! GameCell
                 
-                // Finding tapped cell from our detectors array
-                for cell in self.gameCells {
-                    let thisCell = cell.value as! GameCell
-                    
-                    // Comparing found tapped node and registered gamecells' nodes
-                    if thisCell.detector == nodeForResult {
-                        print ("Hit result : Cell ", thisCell.key)
-                        if thisCell.containsElement == nil {
-                            // If cell is empty, inserting element
-                            
-                            self.insertCube(cell: thisCell)
-                        }
-                        break
+                // Comparing found tapped node and registered gamecells' nodes
+                if thisCell.detector == nodeForResult {
+                    print ("Hit result : Cell ", thisCell.key)
+                    if thisCell.containsElement == nil {
+                        // If cell is empty, inserting element
+                        
+                        self.insertCube(cell: thisCell)
                     }
-                    
+                    break
                 }
+                
             }
         }
     }
@@ -216,53 +257,210 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
             self.winTextNode = nil
         }
         
-        self.setCurrentPlayer(player: "cross")
-        self.playing = 1
-        self.updateGameStatus()
+        self.setNextPlayer(nextPlayer: "cross")
     }
     
-    private func setCurrentPlayer(player: String?) {
-        print ("setCurrentPlayer")
+    private func setNextPlayer(nextPlayer: String?) {
+        print ("setNextPlayer to : ", nextPlayer)
         
         let activePlayerAlpha: CGFloat = 0.9
         let activePlayerHeight: CGFloat = 40
         let inactivePlayerAlpha: CGFloat = 0.2
         let inactivePlayerHeight: CGFloat = 30
         
-        var currentPlayer = player
-        if player == nil {
-            self.playing = self.playing + 1
-            currentPlayer = self.playing % 2 == 0 ? "circle" : "cross" // circle playing on pair numbers
+        if nextPlayer == nil {
+            self.playing = self.playing == "cross" ? "circle":"cross"
+        } else {
+            self.playing = nextPlayer!
         }
         
-        self.playerOneButton.alpha = inactivePlayerAlpha
-        self.playerOneHeightConstraint.constant = inactivePlayerHeight
-        self.playerTwoButton.alpha = inactivePlayerAlpha
-        self.playerTwoHeightConstraint.constant = inactivePlayerHeight
+        self.playerCrossButton.alpha = inactivePlayerAlpha
+        self.playerCrossHeightConstraint.constant = inactivePlayerHeight
+        self.playerCircleButton.alpha = inactivePlayerAlpha
+        self.playerCircleHeightConstraint.constant = inactivePlayerHeight
         
-        if currentPlayer == "cross" {
-            self.playerOneButton.alpha = activePlayerAlpha
-            self.playerOneHeightConstraint.constant = activePlayerHeight
+        var typeCurrentPlayer = ""
+        if self.playing == "cross" {
+            typeCurrentPlayer = self.playerCross
+            self.playerCrossButton.alpha = activePlayerAlpha
+            self.playerCrossHeightConstraint.constant = activePlayerHeight
         }
         else {
-            self.playerTwoButton.alpha = activePlayerAlpha
-            self.playerTwoHeightConstraint.constant = activePlayerHeight
+            typeCurrentPlayer = self.playerCircle
+            self.playerCircleButton.alpha = activePlayerAlpha
+            self.playerCircleHeightConstraint.constant = activePlayerHeight
         }
     
-        let player: String = currentPlayer == "circle" ? "O":"X"
+        let player: String = self.playing == "circle" ? "O":"X"
         self.setStatus(status: "Waiting for \(player) to play")
+        
+        if typeCurrentPlayer == "robot" {
+            // function AI plays
+            
+            Timer.scheduledTimer(withTimeInterval: 2, repeats: false) { (timer) in
+               self.AIMove()
+            }
+        }
+        
     }
     
+    
+    private func AIMove() {
+        
+        print ("Currently playing : ", self.playing)
+        let currentPlayerMoves = self.playing == "cross" ? self.crossCells : self.circleCells
+        let opponentMoves = self.playing == "cross" ? self.circleCells : self.crossCells
+        
+        // If AI is cross:
+        // -> 1. find which cells have circles
+        //      -> if two, then put cross in third
+        //      -> if one, go to 2.
+        // -> 2. find which cells have cross
+        //      -> if two, put in third
+        //      -> if one, put next to it
+        // -> 3. if no cross yet
+        //      -> put in middle case
+        //      -> if middle not free: random cell
+        
+        print ("_______")
+        
+        let winningCells: NSMutableArray = []
+        let blockingCells: NSMutableArray = []
+        
+        // CHECK IF THERE IS A WINNING MOVE
+        for winningCellSequence in self.winningSequences {
+            let thisSequence = NSMutableArray(array: winningCellSequence)
+            
+            for selectedKey in currentPlayerMoves {
+                let key = Int(selectedKey as! String)!
+                if thisSequence.contains(key) {
+                    thisSequence.remove(key)
+                }
+            }
+            
+            // If there is only one missing to win, add it and win
+            if thisSequence.count == 1 {
+                let winningMove = thisSequence[0] as! Int
+                
+                let thisCell = self.gameCells.object(forKey: String(winningMove)) as! GameCell
+                if thisCell.containsElement == nil {
+                    winningCells.add(winningMove)
+                }
+            }
+        }
+        
+        print ("winning moves: ", winningCells)
+        if winningCells.count > 0 {
+            let randomWinningIndex = Int(arc4random_uniform(UInt32(winningCells.count)))
+            let randomWinningMove = winningCells[randomWinningIndex]  as! Int
+            let randomWinningCell = self.gameCells.object(forKey: String(randomWinningMove)) as! GameCell
+            self.insertCube(cell: randomWinningCell)
+        }
+       
+        // IF THERE IS NO WINNING MOVE, CHECKING FOR BLOCKING MOVE
+        if winningCells.count == 0 {
+            for winningCellSequence in self.winningSequences {
+                let thisSequence = NSMutableArray(array: winningCellSequence)
+                
+                for selectedKey in opponentMoves {
+                    let key = Int(selectedKey as! String)!
+                    if thisSequence.contains(key) {
+                        thisSequence.remove(key)
+                    }
+                }
+                
+                // If there is only one missing to win, block
+                if thisSequence.count == 1 {
+                    let blockingMove = thisSequence[0] as! Int
+                    let thisCell = self.gameCells.object(forKey: String(blockingMove)) as! GameCell
+                    if thisCell.containsElement == nil {
+                        blockingCells.add(blockingMove)
+                    }
+                }
+            }
+            print ("blocking moves: ", blockingCells)
+            
+            if blockingCells.count > 0 {
+                let randomBlockingIndex = Int(arc4random_uniform(UInt32(blockingCells.count)))
+                let randomBlockingMove = blockingCells[randomBlockingIndex] as! Int
+                let randomBlockingCell = self.gameCells.object(forKey: String(randomBlockingMove)) as! GameCell
+                self.insertCube(cell: randomBlockingCell)
+            }
+            
+        }
+        
+        // IF THERE IS NO WINNING OR BLOCKING MOVES, RANDOM MOVE
+        if winningCells.count == 0 && blockingCells.count == 0 {
+
+
+            // CALCULATING AVAILABLE WINNING SEQUENCES
+            
+             // for each winning sequence
+            let possibleKeys: NSMutableArray = []
+            for winningCellSequence in self.winningSequences {
+                var possibleSequence = false
+               let thisSequence = NSMutableArray(array: winningCellSequence)
+                
+                // for each currentplayermoves
+                for playermove in currentPlayerMoves {
+                    let key = Int(playermove as! String)!
+                    if thisSequence.contains(key) {
+                        possibleSequence = true
+                        thisSequence.remove(key)
+                    }
+                }
+                
+                if possibleSequence {
+                    for oppmove in opponentMoves {
+                        let key = Int(oppmove as! String)!
+                        if thisSequence.contains(key) {
+                            possibleSequence = false
+                        }
+                    }
+                }
+                
+                if (possibleSequence) {
+                    possibleKeys.addObjects(from: thisSequence as! [Any])
+                    print ("possible winning sequence : ", thisSequence)
+                }
+            }
+           
+            
+            if possibleKeys.count != 0 {
+                 print ("possiblekeys: ", possibleKeys)
+                let randomPossibleIndex = Int(arc4random_uniform(UInt32(possibleKeys.count)))
+                let randomPossibleMove = possibleKeys[randomPossibleIndex]  as! Int
+                let randomPossibleCell = self.gameCells.object(forKey: String(randomPossibleMove)) as! GameCell
+                self.insertCube(cell: randomPossibleCell)
+            }
+            else {
+                let emptyCells: NSMutableArray = []
+                for cell in self.gameCells {
+                    let thisCell = cell.value as! GameCell
+                    if thisCell.containsElement == nil {
+                        emptyCells.add(thisCell.key)
+                    }
+                }
+                print ("possible moves: ", emptyCells)
+                if emptyCells.count > 0 {
+                    let randomIndex = Int(arc4random_uniform(UInt32(emptyCells.count)))
+                    let randomMove = emptyCells[randomIndex]
+                    let randomCell = self.gameCells.object(forKey: randomMove) as! GameCell
+                    self.insertCube(cell: randomCell)
+                }
+            }
+            
+        }
+        
+    }
     
     // Setting board game
     func prepareGame() {
         guard let currentPlane = self.selectedPlane else {
             return
         }
-         print ("preparing Game")
         
         // Create grille
-        
         let length = currentPlane.planeGeometry!.width / 2
         let cellSize = length / 3
         let onethird = Float(cellSize) / 2
@@ -335,7 +533,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
 
         // TODO remove status bar ?
         self.setStatus(status: "Waiting for X to play")
-        self.setCurrentPlayer(player: "cross")
+        self.setNextPlayer(nextPlayer: "cross")
     }
     
     // Adding detectors in cells
@@ -408,7 +606,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
         
         cubeNode.physicsBody = physicsBody
         
-        let player = self.playing % 2 == 0 ? "circle" : "cross" // circle playing on pair numbers
+        let player = self.playing // circle playing on pair numbers
         if let playerElement = self.getPlayerObject(player: player, container: cubeNode) {
             
             cubeNode.addChildNode(playerElement)
@@ -420,10 +618,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
                 self.circleCells.add(cell.key)
             }
             
-            
-            self.setCurrentPlayer(player: nil)
             self.updateGameStatus()
-            
             currentPlane.addChildNode(cubeNode)
         }
         
@@ -469,40 +664,28 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
     
     // Updating game status : checking if game is over or updating status text
     func updateGameStatus() {
+        let nbPlays = self.circleCells.count + self.crossCells.count
+        
         var gameIsOver: Bool = false
-        if (self.playing >= 5) { // After 5 pieces have been placed, there could be a winner
+        if (nbPlays >= 5) { // After 5 pieces have been placed, there could be a winner
             self.checkGameResult()
-            
-            if (self.playing > 9 && self.winner == nil) { // If 9 pieces have been placed and still no winner : it's a tie!
+            if (nbPlays == 9 && self.winner == nil) { // If 9 pieces have been placed and still no winner : it's a tie!
                 gameIsOver = true
             }
         }
         
-        
-        if (!gameIsOver && self.winner == nil) {
-            //self.setCurrentPlayer(player: nil)
-        } else {
+        if (gameIsOver || self.winner != nil) {
             self.endGame()
+        } else {
+            self.setNextPlayer(nextPlayer: nil)
         }
     }
     
     // Calculating game result
     func checkGameResult() {
-        // There are only 8 possible winning sequences
-        let winningSequences = [
-            [1, 2, 3],
-            [1, 4, 7],
-            [1, 5, 9],
-            [2, 5, 8],
-            [3, 5, 7],
-            [3, 6, 9],
-            [4, 5, 6],
-            [7, 8, 9]
-        ]
-        
-    
+       
         // Loop on winning sequences
-        for winningCellSequence in winningSequences {
+        for winningCellSequence in self.winningSequences {
             
             // Checking circle cells
             if (self.circleCells.count >= 3) {
@@ -584,9 +767,13 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
         
         currentPlane.addChildNode(textNode)
         self.winTextNode = textNode
+        let materialText = SCNMaterial()
+        materialText.diffuse.contents = self.generateRandomColor()
+        self.winTextNode!.geometry!.materials = [materialText]
+        
         
         // Just for fun, changing text color every 0.2 seconds
-        self.winningTextTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { (timer) in
+        self.winningTextTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { (timer) in
             let material = SCNMaterial()
             material.diffuse.contents = self.generateRandomColor()
             self.winTextNode!.geometry!.materials = [material]
@@ -607,7 +794,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
         let thisCell = self.gameCells.value(forKey: String(self.cellExploded)) as! GameCell
         if let particleSystem = SCNParticleSystem(named: "Explosion", inDirectory: "art.scnassets/Explosion") {
             let systemNode = SCNNode()
-            particleSystem.particleColor = self.generateRandomColor()
             systemNode.addParticleSystem(particleSystem)
             thisCell.detector.addChildNode(systemNode)
             

@@ -22,10 +22,6 @@
                             <arscnView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="j9r-r4-Hla">
                                 <rect key="frame" x="0.0" y="0.0" width="667" height="375"/>
                             </arscnView>
-                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="detailDisclosure" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="8w7-wK-smx">
-                                <rect key="frame" x="20" y="20" width="22" height="22"/>
-                                <color key="tintColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
-                            </button>
                             <imageView userInteractionEnabled="NO" alpha="0.40000000000000002" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="cross" translatesAutoresizingMaskIntoConstraints="NO" id="2HU-dY-0eG">
                                 <rect key="frame" x="539.5" y="17.5" width="45" height="45"/>
                             </imageView>
@@ -40,7 +36,7 @@
                                 </constraints>
                                 <state key="normal" image="human"/>
                                 <connections>
-                                    <action selector="switchModePlayerOne:" destination="BV1-FR-VrT" eventType="touchUpInside" id="RmP-AQ-Myr"/>
+                                    <action selector="switchModePlayerCross:" destination="BV1-FR-VrT" eventType="touchUpInside" id="0f5-98-2JR"/>
                                 </connections>
                             </button>
                             <button opaque="NO" alpha="0.80000000000000004" contentMode="scaleAspectFit" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="BEl-iM-tKb">
@@ -49,9 +45,9 @@
                                     <constraint firstAttribute="width" secondItem="BEl-iM-tKb" secondAttribute="height" multiplier="1:1" id="eB6-Yf-r4l"/>
                                     <constraint firstAttribute="height" constant="40" id="o2q-sw-S0Z"/>
                                 </constraints>
-                                <state key="normal" image="robot"/>
+                                <state key="normal" image="human"/>
                                 <connections>
-                                    <action selector="switchModePlayerTwo:" destination="BV1-FR-VrT" eventType="touchUpInside" id="6pN-Cy-kD8"/>
+                                    <action selector="switchModePlayerCircle:" destination="BV1-FR-VrT" eventType="touchUpInside" id="HWi-Gq-EDN"/>
                                 </connections>
                             </button>
                             <view alpha="0.69999999999999996" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="6Yw-Ec-pGZ">
@@ -93,14 +89,12 @@
                             <constraint firstItem="2HU-dY-0eG" firstAttribute="height" secondItem="cA0-26-7aY" secondAttribute="height" constant="5" id="BCr-Xg-NoE"/>
                             <constraint firstItem="rzG-NE-F39" firstAttribute="trailing" secondItem="cA0-26-7aY" secondAttribute="trailing" constant="85" id="Fgo-bf-b5y"/>
                             <constraint firstItem="j9r-r4-Hla" firstAttribute="leading" secondItem="rzG-NE-F39" secondAttribute="leading" id="Lby-BF-OkS"/>
-                            <constraint firstItem="8w7-wK-smx" firstAttribute="leading" secondItem="rzG-NE-F39" secondAttribute="leading" constant="20" id="O8p-3i-m2j"/>
                             <constraint firstItem="K3U-cn-Tjn" firstAttribute="centerX" secondItem="BEl-iM-tKb" secondAttribute="centerX" id="Ojs-m3-3bf"/>
                             <constraint firstItem="2HU-dY-0eG" firstAttribute="centerY" secondItem="cA0-26-7aY" secondAttribute="centerY" id="Qte-bM-DnZ"/>
                             <constraint firstItem="2HU-dY-0eG" firstAttribute="width" secondItem="cA0-26-7aY" secondAttribute="width" constant="5" id="Rtc-ij-YcT"/>
                             <constraint firstItem="K3U-cn-Tjn" firstAttribute="width" secondItem="BEl-iM-tKb" secondAttribute="width" constant="5" id="Vb4-le-Qi4"/>
                             <constraint firstItem="rzG-NE-F39" firstAttribute="bottom" secondItem="6Yw-Ec-pGZ" secondAttribute="bottom" constant="10" id="YVr-fL-VdB"/>
                             <constraint firstItem="rzG-NE-F39" firstAttribute="trailing" secondItem="6Yw-Ec-pGZ" secondAttribute="trailing" constant="10" id="bBs-xd-0DH"/>
-                            <constraint firstItem="8w7-wK-smx" firstAttribute="top" secondItem="rzG-NE-F39" secondAttribute="top" constant="20" id="fv2-dp-fnq"/>
                             <constraint firstItem="rzG-NE-F39" firstAttribute="trailing" secondItem="BEl-iM-tKb" secondAttribute="trailing" constant="20" id="hKJ-RO-M9r"/>
                             <constraint firstItem="2HU-dY-0eG" firstAttribute="centerX" secondItem="cA0-26-7aY" secondAttribute="centerX" id="im8-K3-azf"/>
                             <constraint firstItem="6Yw-Ec-pGZ" firstAttribute="leading" secondItem="rzG-NE-F39" secondAttribute="leading" constant="10" id="kdz-UD-4i9"/>
@@ -112,10 +106,10 @@
                         <viewLayoutGuide key="safeArea" id="rzG-NE-F39"/>
                     </view>
                     <connections>
-                        <outlet property="playerOneButton" destination="cA0-26-7aY" id="jxY-23-39j"/>
-                        <outlet property="playerOneHeightConstraint" destination="Usn-VD-3oR" id="ILW-xt-3de"/>
-                        <outlet property="playerTwoButton" destination="BEl-iM-tKb" id="Ti3-29-da8"/>
-                        <outlet property="playerTwoHeightConstraint" destination="o2q-sw-S0Z" id="e3j-Bm-Jx9"/>
+                        <outlet property="playerCircleButton" destination="BEl-iM-tKb" id="ncB-l3-5dn"/>
+                        <outlet property="playerCircleHeightConstraint" destination="o2q-sw-S0Z" id="6vh-3k-Dt3"/>
+                        <outlet property="playerCrossButton" destination="cA0-26-7aY" id="g8N-mi-68s"/>
+                        <outlet property="playerCrossHeightConstraint" destination="Usn-VD-3oR" id="tEe-Di-Ohy"/>
                         <outlet property="sceneView" destination="j9r-r4-Hla" id="82m-N6-m6a"/>
                         <outlet property="statusLabel" destination="ucg-L8-8T0" id="t81-ta-D2Q"/>
                     </connections>
@@ -129,6 +123,5 @@
         <image name="circle" width="128" height="128"/>
         <image name="cross" width="128" height="128"/>
         <image name="human" width="128" height="128"/>
-        <image name="robot" width="128" height="128"/>
     </resources>
 </document>

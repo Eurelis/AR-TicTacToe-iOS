@@ -12,8 +12,11 @@ import ARKit
 
 class OneDeviceViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDelegate  {
 
+    let ARCompatible = ARConfiguration.isSupported
+    
     @IBOutlet weak var statusLabel: UILabel!
-    @IBOutlet var sceneView: ARSCNView!
+    @IBOutlet var ARsceneView: ARSCNView!
+    @IBOutlet weak var sceneKitView: SCNView!
     
     // Used for plane detection
     var ARconfiguration = ARWorldTrackingConfiguration()
@@ -57,31 +60,50 @@ class OneDeviceViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsCo
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        Log.info(log: "Initializing scene")
-        
         // Set the view's delegate
-        sceneView.delegate = self
-        sceneView.scene.physicsWorld.contactDelegate = self
-        sceneView.debugOptions = [/*.showBoundingBoxes,*/ ARSCNDebugOptions.showFeaturePoints /*ARSCNDebugOptions.showWorldOrigin*/]
-        
-        sceneView.autoenablesDefaultLighting = true
-        sceneView.automaticallyUpdatesLighting = true
+    
         
         self.setStatus(status: "Initializing...")
-        self.resetSceneViewSession()
-        self.setWorldBottom()
+        if ARCompatible {
+            Log.info(log: "Initializing AR Scene")
+            sceneKitView.isHidden = true
+            ARsceneView.isHidden = false
+            
+            ARsceneView.delegate = self
+            ARsceneView.scene.physicsWorld.contactDelegate = self
+            ARsceneView.debugOptions = [/*.showBoundingBoxes,*/ ARSCNDebugOptions.showFeaturePoints /*ARSCNDebugOptions.showWorldOrigin*/]
+            ARsceneView.autoenablesDefaultLighting = true
+            ARsceneView.automaticallyUpdatesLighting = true
+            
+            self.resetSceneViewSession()
+            self.setWorldBottom()
+        }
+        else {
+            Log.info(log: "Initializing SceneKit Scene")
+            ARsceneView.isHidden = true
+            sceneKitView.isHidden = false
+            
+            self.setSceneKitPlane()
+        }
+       
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        sceneView.session.run(self.ARconfiguration)
+        if ARCompatible {
+            ARsceneView.session.run(self.ARconfiguration)
+        }
     }
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        
-        // Pause the view's session
-        sceneView.session.pause()
+        self.pauseSession()
+    }
+    
+    private func pauseSession() {
+        if ARCompatible {
+            ARsceneView.session.pause()
+        }
     }
     
     override func didReceiveMemoryWarning() {
@@ -91,7 +113,7 @@ class OneDeviceViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsCo
     
     @IBAction func backToHome(_ sender: Any) {
         self.resetGame()
-        sceneView.session.pause()
+        self.pauseSession()
         self.dismiss(animated: true, completion: nil)
     }
     
@@ -146,8 +168,8 @@ class OneDeviceViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsCo
     // Detecting when sceneview is tapped
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         let touch = touches.first!
-        let location = touch.location(in: sceneView)
-        if self.selectedPlane == nil { // If the game is not set, trying to prepare board
+        let location = touch.location(in: ARsceneView)
+        if ARCompatible && self.selectedPlane == nil { // If the game is not set, trying to prepare board
             self.setStatus(status: "Setting game board...")
             setGameAtLocation(location: location)
         } else {
@@ -171,7 +193,7 @@ class OneDeviceViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsCo
     // selects the anchor at the specified location and removes all other unused anchors
     func setGameAtLocation(location: CGPoint) {
         // Hit test result from intersecting with an existing plane anchor, taking into account the plane’s extent.
-        let hitResults = sceneView.hitTest(location, types: .existingPlaneUsingExtent)
+        let hitResults = ARsceneView.hitTest(location, types: .existingPlaneUsingExtent)
         if hitResults.count > 0 {
             let result: ARHitTestResult = hitResults.first!
             if let planeAnchor = result.anchor as? ARPlaneAnchor {
@@ -199,6 +221,60 @@ class OneDeviceViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsCo
     }
     
     
+    
+    var camera: SCNNode!
+    var ground: SCNNode!
+    var light: SCNNode!
+    func setSceneKitPlane() {
+        sceneKitView.scene = SCNScene()
+
+        let groundGeometry = SCNFloor()
+        groundGeometry.reflectivity = 0
+        let groundMaterial = SCNMaterial()
+        groundMaterial.diffuse.contents = UIImage(named: "wood_texture")
+        groundGeometry.materials = [groundMaterial]
+        ground = SCNNode(geometry: groundGeometry)
+
+        let camera = SCNCamera()
+        camera.zFar = 10000
+        self.camera = SCNNode()
+        self.camera.camera = camera
+        self.camera.position = SCNVector3(x: 5, y: 25, z: 25)
+        let constraint = SCNLookAtConstraint(target: ground)
+        constraint.isGimbalLockEnabled = true
+        self.camera.constraints = [constraint]
+
+        let ambientLight = SCNLight()
+        ambientLight.color = UIColor.darkGray
+        ambientLight.type = .ambient
+        self.camera.light = ambientLight
+
+        let spotLight = SCNLight()
+        spotLight.type = .spot
+        spotLight.castsShadow = true
+        spotLight.spotInnerAngle = 70.0
+        spotLight.spotOuterAngle = 90.0
+        spotLight.zFar = 500
+        light = SCNNode()
+        light.light = spotLight
+        light.position = SCNVector3(x: 0, y: 25, z: 25)
+        light.constraints = [constraint]
+
+        let groundShape = SCNPhysicsShape(geometry: groundGeometry, options: nil)
+        let groundBody = SCNPhysicsBody(type: .kinematic, shape: groundShape)
+        groundBody.friction = 1.0
+        groundBody.categoryBitMask = CollisionTypes.plane.rawValue
+        groundBody.contactTestBitMask = CollisionTypes.shape.rawValue
+        ground.physicsBody = groundBody
+
+        sceneKitView.scene?.rootNode.addChildNode(self.camera)
+        sceneKitView.scene?.rootNode.addChildNode(ground)
+        sceneKitView.scene?.rootNode.addChildNode(light)
+        
+        prepareGame()
+    }
+    
+    
     // For testing and fun random uicolor generator
     func generateRandomColor() -> UIColor {
         let hue : CGFloat = CGFloat(arc4random() % 256) / 256 // use 256 to get full range from 0.0 to 1.0
@@ -209,13 +285,18 @@ class OneDeviceViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsCo
     
     // Find which GameCell has beep tapped from hittest result on scene
     func getTappedCell(location: CGPoint) {
+        Log.info(log: "getTappedCell")
        
-        // Retrieving hit location from scene
-        let hitTestResults: [SCNHitTestResult] = self.sceneView.hitTest(location, options: [SCNHitTestOption.firstFoundOnly: true])
-        if let result = hitTestResults.first { // If there is a result
+        var hitTestResults: [SCNHitTestResult]
+        if ARCompatible {
+            // Retrieving hit location from scene
+           hitTestResults  = self.ARsceneView.hitTest(location, options: [SCNHitTestOption.firstFoundOnly: true])
+        } else {
+            hitTestResults = self.sceneKitView.hitTest(location, options: [SCNHitTestOption.firstFoundOnly: true])
+        }
         
+        if let result = hitTestResults.first { // If there is a result
             let nodeForResult = result.node //returns the detected tap
-            
             // Finding tapped cell from our detectors array
             for cell in self.gameCells {
                 let thisCell = cell.value as! GameCell
@@ -223,8 +304,8 @@ class OneDeviceViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsCo
                 // Comparing found tapped node and registered gamecells' nodes
                 if thisCell.detector == nodeForResult {
                     if thisCell.containsElement == nil {
-                        // If cell is empty, inserting element
-                        self.insertCube(cell: thisCell)
+                        Log.info(log: "Tapped cell : \(thisCell.key)")
+                        self.insertCube(cell: thisCell) // cell is empty, inserting element
                     }
                     break
                 }
@@ -236,7 +317,7 @@ class OneDeviceViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsCo
     // On tap on the refresh button
     @IBAction func refreshScene(_ sender: Any) {
         self.resetGame()
-        sceneView.debugOptions = [ARSCNDebugOptions.showFeaturePoints]
+        ARsceneView.debugOptions = [ARSCNDebugOptions.showFeaturePoints]
         self.resetSceneViewSession()
     }
     
@@ -460,47 +541,64 @@ class OneDeviceViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsCo
     
     // Setting board game
     func prepareGame() {
-        guard let currentPlane = self.selectedPlane else {
-            return
+        let currentPlane = self.selectedPlane
+        let currentGround = self.ground
+        
+        var length: CGFloat
+        if currentPlane != nil {
+            length = currentPlane!.planeGeometry!.width / 2
+        } else {
+            length = self.sceneKitView.bounds.height / 10
         }
         
         // Create grille
-        let length = currentPlane.planeGeometry!.width / 2
         let cellSize = length / 3
         let onethird = Float(cellSize) / 2
         
         let width = cellSize / 10
-        let zPosition = Float(currentPlane.planeGeometry!.height + (width / 2))
-
+        
         let material = SCNMaterial()
-        material.diffuse.contents = UIColor.red
-
+        material.diffuse.contents = UIColor.yellow
+    
         let bar = SCNBox(width: width, height: width, length: length, chamferRadius: 0)
         let nodeBar1 = SCNNode(geometry: bar)
         nodeBar1.geometry!.materials = [material]
-        nodeBar1.position = SCNVector3Make(-onethird, zPosition, 0)
-
+       
         let bar2 = SCNBox(width: width, height: width, length: length, chamferRadius: 0)
         let nodeBar2 = SCNNode(geometry: bar2)
         nodeBar2.geometry!.materials = [material]
-        nodeBar2.position = SCNVector3Make(onethird, zPosition, 0)
-
-
+       
         let bar3 = SCNBox(width: length, height: width, length: width, chamferRadius: 0)
         let nodeBar3 = SCNNode(geometry: bar3)
         nodeBar3.geometry!.materials = [material]
-        nodeBar3.position = SCNVector3Make(0, zPosition, -onethird)
-
-
+       
         let bar4 = SCNBox(width: length, height: width, length: width, chamferRadius: 0)
         let nodeBar4 = SCNNode(geometry: bar4)
         nodeBar4.geometry!.materials = [material]
-        nodeBar4.position = SCNVector3Make(0, zPosition, onethird)
 
-        currentPlane.addChildNode(nodeBar1)
-        currentPlane.addChildNode(nodeBar2)
-        currentPlane.addChildNode(nodeBar3)
-        currentPlane.addChildNode(nodeBar4)
+        if  currentPlane != nil {
+            let zPosition = Float(currentPlane!.planeGeometry!.height + (width / 2))
+            
+            nodeBar1.position = SCNVector3Make(-onethird, zPosition, 0)
+            nodeBar2.position = SCNVector3Make(onethird, zPosition, 0)
+            nodeBar3.position = SCNVector3Make(0, zPosition, -onethird)
+            nodeBar4.position = SCNVector3Make(0, zPosition, onethird)
+            
+            currentPlane!.addChildNode(nodeBar1)
+            currentPlane!.addChildNode(nodeBar2)
+            currentPlane!.addChildNode(nodeBar3)
+            currentPlane!.addChildNode(nodeBar4)
+        } else {
+            nodeBar1.position = SCNVector3Make(-onethird, 0, 0)
+            nodeBar2.position = SCNVector3Make(onethird, 0, 0)
+            nodeBar3.position = SCNVector3Make(0, 0, -onethird)
+            nodeBar4.position = SCNVector3Make(0, 0, onethird)
+            
+            currentGround!.addChildNode(nodeBar1)
+            currentGround!.addChildNode(nodeBar2)
+            currentGround!.addChildNode(nodeBar3)
+            currentGround!.addChildNode(nodeBar4)
+        }
 
         self.setGameCells(cellSize: cellSize)
     }
@@ -542,14 +640,13 @@ class OneDeviceViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsCo
     
     // Adding detectors in cells
     func addPlaneDetector(key: String, cellSize: CGFloat, centerX: CGFloat, centerY: CGFloat) {
-        guard let currentPlane = self.selectedPlane else {
-            return
-        }
+        let currentPlane = self.selectedPlane
+        let currentGround = self.ground
         
         let formattedCellSize = cellSize / 1.5
 
         // Creating a detector plane in a node
-        let detectorBox = SCNBox(width: formattedCellSize, height: formattedCellSize, length: formattedCellSize, chamferRadius: 0)
+        let detectorBox = SCNBox(width: formattedCellSize, height: formattedCellSize / 3, length: formattedCellSize, chamferRadius: 0)
         let detector = SCNNode(geometry: detectorBox)
        
         // Transparent color for detector planes
@@ -559,15 +656,18 @@ class OneDeviceViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsCo
         
         // We need to set the detector planes slightly higher than the board object so that it can detect touch
         let zPosition = formattedCellSize / 2
-
         detector.position = SCNVector3Make(
             Float(centerX),
             Float(zPosition),
             Float(centerY))
-    
         
-        // Adding detector to scene
-        currentPlane.addChildNode(detector)
+        if currentPlane != nil {
+            // Adding detector to scene
+            currentPlane!.addChildNode(detector)
+        }
+        else if currentGround != nil {
+            currentGround!.addChildNode(detector)
+        }
 
         // Saving cell for later use
         self.gameCells.setValue(GameCell(key: key, detector: detector), forKey: key) // Adding gamecell to local array
@@ -577,9 +677,8 @@ class OneDeviceViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsCo
     
     
     func insertCube(cell: GameCell) {
-        guard let currentPlane = self.selectedPlane else {
-            return
-        }
+        let currentPlane = self.selectedPlane
+        let currentGround = self.ground
         
         let cellWidth = cell.detector.boundingBox.max.x - cell.detector.boundingBox.min.x
         let cellHeight = cell.detector.boundingBox.max.y - cell.detector.boundingBox.min.y
@@ -603,7 +702,7 @@ class OneDeviceViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsCo
         
         let shape = SCNPhysicsShape(geometry: cube, options: nil)
         let physicsBody = SCNPhysicsBody(type: .dynamic, shape: shape)
-        physicsBody.mass = 1.0
+        physicsBody.mass = 10.0
         physicsBody.restitution = 0.5
         physicsBody.friction = 1.0
         physicsBody.categoryBitMask = CollisionTypes.shape.rawValue
@@ -623,7 +722,13 @@ class OneDeviceViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsCo
             }
             
             self.updateGameStatus()
-            currentPlane.addChildNode(cubeNode)
+            
+            if (currentPlane != nil ) {
+                currentPlane!.addChildNode(cubeNode)
+            } else if currentGround != nil {
+                currentGround!.addChildNode(cubeNode)
+            }
+            
         }
         
     }
@@ -745,13 +850,18 @@ class OneDeviceViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsCo
     
     // Draw winning 3D Text
     func draw3DText(text: String) {
-        guard let currentPlane = self.selectedPlane else {
-            return
+        let currentPlane = self.selectedPlane
+        let currentGround = self.ground
+        
+        var baseGameSize: Float
+        if currentPlane != nil {
+            baseGameSize = Float(currentPlane!.planeGeometry!.width) / 2
+        } else {
+            baseGameSize = Float(self.sceneKitView.bounds.height) / 10
         }
         
-        let baseGameSize = Float(currentPlane.planeGeometry!.width) / 2
         let maxLength = baseGameSize / 3.5
-        
+      
         // Creating a custom SCNText, extrusionDepth defines the text depth
         let scnTxt = SCNText(string: text, extrusionDepth: CGFloat(maxLength / 5))
         let textNode = SCNNode(geometry: scnTxt)
@@ -761,16 +871,21 @@ class OneDeviceViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsCo
         let textScale = baseGameSize / textLength
         textNode.scale = SCNVector3Make(textScale, textScale, 1)
 
-        let halfLength = textLength / 2
-        let scaledHalfLength = halfLength * textScale
-        textNode.position.x = -scaledHalfLength
-
         let textHeight = textNode.boundingBox.max.y - textNode.boundingBox.min.y
         let halfHeight = textHeight / 2
         let scaledHalfHeight = halfHeight * textScale
         textNode.position.y = scaledHalfHeight
         
-        currentPlane.addChildNode(textNode)
+        let halfLength = textLength / 2
+        let scaledHalfLength = halfLength * textScale
+        textNode.position.x = -scaledHalfLength
+        
+        if currentPlane != nil {
+            currentPlane!.addChildNode(textNode)
+        } else if currentGround != nil {
+            currentGround!.addChildNode(textNode)
+        }
+        
         self.winTextNode = textNode
         let materialText = SCNMaterial()
         materialText.diffuse.contents = self.generateRandomColor()
@@ -827,7 +942,7 @@ class OneDeviceViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsCo
         physicsBody.contactTestBitMask = CollisionTypes.shape.rawValue
         bottomNode.physicsBody = physicsBody
         
-        self.sceneView.scene.rootNode.addChildNode(bottomNode)
+        self.ARsceneView.scene.rootNode.addChildNode(bottomNode)
     }
     
     // MARK: - SCNPhysicsContactDelegate
@@ -850,69 +965,3 @@ class OneDeviceViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsCo
 }
 
 
-
-extension OneDeviceViewController: ARSKViewDelegate {
-    
-    // Reseting sceneview session
-    func resetSceneViewSession() {
-        Log.info(log: "SceneView session reset")
-        
-        self.ARconfiguration.planeDetection = .horizontal
-        sceneView.session.run(self.ARconfiguration, options: [.removeExistingAnchors, .resetTracking])
-        
-        for node in self.sceneView.scene.rootNode.childNodes {
-            node.removeFromParentNode()
-        }
-        
-        self.planes = [:]
-        self.selectedPlane = nil
-        self.gameCells = [:]
-        self.setStatus(status: "Scanning for planes - Move around to detect planes")
-    }
-    
-    // Stop plane tracking
-    func disableTracking () {
-        Log.info(log: "tracking disabled")
-        self.ARconfiguration.planeDetection = []
-        
-        sceneView.debugOptions = []
-        self.sceneView.session.run(self.ARconfiguration, options: [])
-    }
-    
-    
-    // MARK: - ARSCNViewDelegate
-    
-    func renderer(_ renderer: SCNSceneRenderer, didAdd node: SCNNode, for anchor: ARAnchor) {
-        guard let thisAnchor = anchor as? ARPlaneAnchor else{
-            return
-        }
-        
-        let plane = Plane(anchor: thisAnchor)
-        node.addChildNode(plane)
-        self.planes.setValue(plane, forKey: thisAnchor.identifier.uuidString)
-        Log.info(log: "Found new plane")
-        
-        // Updating status on main thread
-        DispatchQueue.main.async {
-            self.setStatus(status: "\(self.planes.count) planes detected - Tap on it to play")
-        }
-    }
-    
-    func renderer(_ renderer: SCNSceneRenderer, didUpdate node: SCNNode, for anchor: ARAnchor) {
-        guard let thisAnchor = anchor as? ARPlaneAnchor else{
-            return
-        }
-        
-        // See if this is a plane we are currently rendering
-        guard let plane: Plane = self.planes.value(forKey: thisAnchor.identifier.uuidString) as? Plane else {
-            return
-        }
-        
-        if !plane.isSelected {
-            plane.update(anchor: thisAnchor)
-        }
-        
-    }
-    
-    
-}

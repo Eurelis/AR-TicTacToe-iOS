@@ -12,26 +12,15 @@ import MultipeerConnectivity
 
 class HomeViewController: UIViewController {
     
-    @IBOutlet weak var oneDeviceText2: UILabel!
-    @IBOutlet weak var oneDeviceText: UILabel!
-    @IBOutlet weak var oneDeviceButton: UIButton!
-    
-    var ARCompatible = true
+    let ARCompatible = ARConfiguration.isSupported
     var isHost = false
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
        
-        if !ARConfiguration.isSupported {
+        if !ARCompatible {
             Log.info(log: "Device is not ARKit compatible")
-            self.ARCompatible = false
-            
-            self.oneDeviceButton.isEnabled = false
-            self.oneDeviceButton.alpha = 0.5
-            self.oneDeviceText.alpha = 0.5
-            self.oneDeviceText2.alpha = 0.5
-            
-            let alert = UIAlertController(title: "ARKit unavailable", message: "Your device is not compatible with ARKit, you will not be able to play single player", preferredStyle: .alert)
+            let alert = UIAlertController(title: "ARKit unavailable", message: "Your device is not compatible with ARKit, the game will only be static 3D", preferredStyle: .alert)
             alert.addAction(UIAlertAction(title: "Ok", style: .default, handler: nil))
             present(alert, animated: true, completion:nil)
         }
@@ -42,7 +31,7 @@ class HomeViewController: UIViewController {
         
         let actionSheet = UIAlertController(title: "Connect to others", message: nil, preferredStyle: .actionSheet)
         
-        if self.ARCompatible {
+        if ARCompatible {
              actionSheet.addAction(UIAlertAction(title: "Host a session", style: .default, handler: startHosting))
         }
        

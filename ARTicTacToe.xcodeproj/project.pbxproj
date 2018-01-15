@@ -19,6 +19,7 @@
 		8B5B5A132008B1E2007F3FD6 /* Log.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B5B5A122008B1E2007F3FD6 /* Log.swift */; };
 		8B5B5A152008B21A007F3FD6 /* GlobalVars.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B5B5A142008B21A007F3FD6 /* GlobalVars.swift */; };
 		8B9EBEAF1FE91989008876A5 /* CollisionTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B9EBEAE1FE91989008876A5 /* CollisionTypes.swift */; };
+		8BBB57CE200CE42F008534A6 /* OneDeviceViewController+ARSKViewDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BBB57CD200CE42F008534A6 /* OneDeviceViewController+ARSKViewDelegate.swift */; };
 		8BFBAE6F1FDAC9FB00C70179 /* GameCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BFBAE6E1FDAC9FB00C70179 /* GameCell.swift */; };
 /* End PBXBuildFile section */
 
@@ -37,6 +38,7 @@
 		8B5B5A122008B1E2007F3FD6 /* Log.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Log.swift; sourceTree = "<group>"; };
 		8B5B5A142008B21A007F3FD6 /* GlobalVars.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalVars.swift; sourceTree = "<group>"; };
 		8B9EBEAE1FE91989008876A5 /* CollisionTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollisionTypes.swift; sourceTree = "<group>"; };
+		8BBB57CD200CE42F008534A6 /* OneDeviceViewController+ARSKViewDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OneDeviceViewController+ARSKViewDelegate.swift"; sourceTree = "<group>"; };
 		8BFBAE6E1FDAC9FB00C70179 /* GameCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameCell.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -97,6 +99,7 @@
 			children = (
 				8B5B5A0720077229007F3FD6 /* HomeViewController.swift */,
 				8B1B0EA91FD6E33D0004A0AF /* OneDeviceViewController.swift */,
+				8BBB57CD200CE42F008534A6 /* OneDeviceViewController+ARSKViewDelegate.swift */,
 				8B5B5A0B20077343007F3FD6 /* TwoDevicesViewController.swift */,
 			);
 			path = ViewControllers;
@@ -205,6 +208,7 @@
 				8B5B5A152008B21A007F3FD6 /* GlobalVars.swift in Sources */,
 				8B5B5A132008B1E2007F3FD6 /* Log.swift in Sources */,
 				8B1B0EAA1FD6E33D0004A0AF /* OneDeviceViewController.swift in Sources */,
+				8BBB57CE200CE42F008534A6 /* OneDeviceViewController+ARSKViewDelegate.swift in Sources */,
 				8B9EBEAF1FE91989008876A5 /* CollisionTypes.swift in Sources */,
 				8B1B0EBB1FD6E60C0004A0AF /* Plane.swift in Sources */,
 				8B5B5A0C20077343007F3FD6 /* TwoDevicesViewController.swift in Sources */,

@@ -10,7 +10,7 @@ import UIKit
 import SceneKit
 import ARKit
 
-class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDelegate {
+class OneDeviceViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDelegate  {
 
     @IBOutlet weak var statusLabel: UILabel!
     @IBOutlet var sceneView: ARSCNView!
@@ -42,7 +42,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
     @IBOutlet weak var playerCrossButton: UIButton!
     @IBOutlet weak var playerCrossHeightConstraint: NSLayoutConstraint!
     
-    var playerCircle: String = "human"
+    var playerCircle: String = "robot"
     @IBOutlet weak var playerCircleButton: UIButton!
     @IBOutlet weak var playerCircleHeightConstraint: NSLayoutConstraint!
     
@@ -56,6 +56,8 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        Log.info(log: "Initializing scene")
         
         // Set the view's delegate
         sceneView.delegate = self
@@ -87,12 +89,18 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
         // Release any cached data, images, etc that aren't in use.
     }
     
+    @IBAction func backToHome(_ sender: Any) {
+        self.resetGame()
+        sceneView.session.pause()
+        self.dismiss(animated: true, completion: nil)
+    }
+    
     @IBAction func switchModePlayerCross(_ sender: Any) {
         self.switchConfirmDialog(completion: {() -> Void in
             let newMode = self.playerCross == "human" ? "robot":"human"
             self.playerCross = newMode
             
-            print ("switchModePlayerCross to ", newMode)
+            Log.debug(log: "switchModePlayerCross to \(newMode)")
             self.playerCrossButton.setImage(UIImage(named: newMode), for: .normal)
         })
     }
@@ -102,7 +110,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
             let newMode = self.playerCircle == "human" ? "robot":"human"
             self.playerCircle = newMode
             
-            print ("switchModePlayerCircle to ", newMode)
+            Log.debug(log: "switchModePlayerCircle to \(newMode)")
             self.playerCircleButton.setImage(UIImage(named: newMode), for: .normal)
         })
     }
@@ -116,7 +124,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
                 self.resetGame()
             }
             let cancelAction = UIAlertAction(title: "Cancel", style: .cancel) { (alert: UIAlertAction!) -> Void in
-                //print("You pressed Cancel")
+                Log.debug(log: "You pressed Cancel")
             }
             
             alert.addAction(clearAction)
@@ -153,7 +161,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
                 if typePlayer == "human" {
                     getTappedCell(location: location)
                 } else {
-                    print ("cannot play! waiting for AI to play")
+                    Log.debug(log: "cannot play! waiting for AI to play")
                 }
             }
            
@@ -214,10 +222,8 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
                 
                 // Comparing found tapped node and registered gamecells' nodes
                 if thisCell.detector == nodeForResult {
-                    print ("Hit result : Cell ", thisCell.key)
                     if thisCell.containsElement == nil {
                         // If cell is empty, inserting element
-                        
                         self.insertCube(cell: thisCell)
                     }
                     break
@@ -230,13 +236,12 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
     // On tap on the refresh button
     @IBAction func refreshScene(_ sender: Any) {
         self.resetGame()
+        sceneView.debugOptions = [ARSCNDebugOptions.showFeaturePoints]
         self.resetSceneViewSession()
     }
     
     // Restarting game
     func resetGame() {
-        print ("resetting game")
-        
         for cell in self.gameCells {
             let thisCell = cell.value as! GameCell
             thisCell.detector.removeAllParticleSystems()
@@ -260,9 +265,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
         self.setNextPlayer(nextPlayer: "cross")
     }
     
-    private func setNextPlayer(nextPlayer: String?) {
-        print ("setNextPlayer to : ", nextPlayer)
-        
+    private func setNextPlayer(nextPlayer: String?) {        
         let activePlayerAlpha: CGFloat = 0.9
         let activePlayerHeight: CGFloat = 40
         let inactivePlayerAlpha: CGFloat = 0.2
@@ -293,10 +296,10 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
     
         let player: String = self.playing == "circle" ? "O":"X"
         self.setStatus(status: "Waiting for \(player) to play")
+        Log.info(log: "Waiting for \(player) to play")
         
         if typeCurrentPlayer == "robot" {
             // function AI plays
-            
             Timer.scheduledTimer(withTimeInterval: 2, repeats: false) { (timer) in
                self.AIMove()
             }
@@ -307,7 +310,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
     
     private func AIMove() {
         
-        print ("Currently playing : ", self.playing)
+        Log.debug(log: "Currently playing : \(self.playing)")
         let currentPlayerMoves = self.playing == "cross" ? self.crossCells : self.circleCells
         let opponentMoves = self.playing == "cross" ? self.circleCells : self.crossCells
         
@@ -321,9 +324,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
         // -> 3. if no cross yet
         //      -> put in middle case
         //      -> if middle not free: random cell
-        
-        print ("_______")
-        
+                
         let winningCells: NSMutableArray = []
         let blockingCells: NSMutableArray = []
         
@@ -349,8 +350,9 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
             }
         }
         
-        print ("winning moves: ", winningCells)
         if winningCells.count > 0 {
+            Log.debug(log: "winning moves: \(winningCells)")
+            
             let randomWinningIndex = Int(arc4random_uniform(UInt32(winningCells.count)))
             let randomWinningMove = winningCells[randomWinningIndex]  as! Int
             let randomWinningCell = self.gameCells.object(forKey: String(randomWinningMove)) as! GameCell
@@ -378,9 +380,9 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
                     }
                 }
             }
-            print ("blocking moves: ", blockingCells)
-            
+           
             if blockingCells.count > 0 {
+                Log.debug(log: "blocking moves: \(blockingCells)")
                 let randomBlockingIndex = Int(arc4random_uniform(UInt32(blockingCells.count)))
                 let randomBlockingMove = blockingCells[randomBlockingIndex] as! Int
                 let randomBlockingCell = self.gameCells.object(forKey: String(randomBlockingMove)) as! GameCell
@@ -421,13 +423,13 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
                 
                 if (possibleSequence) {
                     possibleKeys.addObjects(from: thisSequence as! [Any])
-                    print ("possible winning sequence : ", thisSequence)
+                    Log.debug(log: "possible winning sequence: \(thisSequence)")
                 }
             }
            
             
             if possibleKeys.count != 0 {
-                 print ("possiblekeys: ", possibleKeys)
+                Log.debug(log: "possiblekeys: \(possibleKeys)")
                 let randomPossibleIndex = Int(arc4random_uniform(UInt32(possibleKeys.count)))
                 let randomPossibleMove = possibleKeys[randomPossibleIndex]  as! Int
                 let randomPossibleCell = self.gameCells.object(forKey: String(randomPossibleMove)) as! GameCell
@@ -441,8 +443,10 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
                         emptyCells.add(thisCell.key)
                     }
                 }
-                print ("possible moves: ", emptyCells)
+                
                 if emptyCells.count > 0 {
+                    Log.debug(log: "empty cells: \(emptyCells)")
+                    
                     let randomIndex = Int(arc4random_uniform(UInt32(emptyCells.count)))
                     let randomMove = emptyCells[randomIndex]
                     let randomCell = self.gameCells.object(forKey: randomMove) as! GameCell
@@ -503,7 +507,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
     
     // Calculating and setting cell "detectors"
     func setGameCells(cellSize: CGFloat) {
-        print ("settingGameCells")
         // TOP LEFT
         self.addPlaneDetector(key: "1", cellSize: cellSize, centerX: cellSize, centerY: cellSize)
 
@@ -531,8 +534,9 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
         // BOTTOM RIGHT
         self.addPlaneDetector(key: "9", cellSize: cellSize, centerX: -cellSize, centerY: -cellSize)
 
-        // TODO remove status bar ?
-        self.setStatus(status: "Waiting for X to play")
+        
+        Log.info(log: "Game is set and ready to play")
+        
         self.setNextPlayer(nextPlayer: "cross")
     }
     
@@ -733,6 +737,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
         
          // Status : tap to restart
         setStatus(status: "Game is over : \(text) - Tap anywhere to restart")
+        Log.info(log: "Game is over : \(text)")
         
         // Drop 3D text on game set
         self.draw3DText(text: text)
@@ -834,12 +839,80 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
             // Contact avec le bottom
             if contact.nodeA.physicsBody!.categoryBitMask == CollisionTypes.bottom.rawValue {
                 contact.nodeB.removeFromParentNode()
-                print ("an object reached the bottom and was removed")
+                Log.info(log: "an object reached the bottom and was removed")
             } else if contact.nodeB.physicsBody!.categoryBitMask == CollisionTypes.bottom.rawValue {
                 contact.nodeA.removeFromParentNode()
-                print ("an object reached the bottom and was removed")
+                Log.info(log: "an object reached the bottom and was removed")
             }
         }
     }
+    
+}
+
+
+
+extension OneDeviceViewController: ARSKViewDelegate {
+    
+    // Reseting sceneview session
+    func resetSceneViewSession() {
+        Log.info(log: "SceneView session reset")
+        
+        self.ARconfiguration.planeDetection = .horizontal
+        sceneView.session.run(self.ARconfiguration, options: [.removeExistingAnchors, .resetTracking])
+        
+        for node in self.sceneView.scene.rootNode.childNodes {
+            node.removeFromParentNode()
+        }
+        
+        self.planes = [:]
+        self.selectedPlane = nil
+        self.gameCells = [:]
+        self.setStatus(status: "Scanning for planes - Move around to detect planes")
+    }
+    
+    // Stop plane tracking
+    func disableTracking () {
+        Log.info(log: "tracking disabled")
+        self.ARconfiguration.planeDetection = []
+        
+        sceneView.debugOptions = []
+        self.sceneView.session.run(self.ARconfiguration, options: [])
+    }
+    
+    
+    // MARK: - ARSCNViewDelegate
+    
+    func renderer(_ renderer: SCNSceneRenderer, didAdd node: SCNNode, for anchor: ARAnchor) {
+        guard let thisAnchor = anchor as? ARPlaneAnchor else{
+            return
+        }
+        
+        let plane = Plane(anchor: thisAnchor)
+        node.addChildNode(plane)
+        self.planes.setValue(plane, forKey: thisAnchor.identifier.uuidString)
+        Log.info(log: "Found new plane")
+        
+        // Updating status on main thread
+        DispatchQueue.main.async {
+            self.setStatus(status: "\(self.planes.count) planes detected - Tap on it to play")
+        }
+    }
+    
+    func renderer(_ renderer: SCNSceneRenderer, didUpdate node: SCNNode, for anchor: ARAnchor) {
+        guard let thisAnchor = anchor as? ARPlaneAnchor else{
+            return
+        }
+        
+        // See if this is a plane we are currently rendering
+        guard let plane: Plane = self.planes.value(forKey: thisAnchor.identifier.uuidString) as? Plane else {
+            return
+        }
+        
+        if !plane.isSelected {
+            plane.update(anchor: thisAnchor)
+        }
+        
+    }
+    
     
 }

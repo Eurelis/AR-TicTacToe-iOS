@@ -7,29 +7,35 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		8B0D100F1FD8242E00D65C5B /* ViewController+ARSKViewDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B0D100E1FD8242E00D65C5B /* ViewController+ARSKViewDelegate.swift */; };
 		8B1B0EA61FD6E33D0004A0AF /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B1B0EA51FD6E33D0004A0AF /* AppDelegate.swift */; };
 		8B1B0EA81FD6E33D0004A0AF /* art.scnassets in Resources */ = {isa = PBXBuildFile; fileRef = 8B1B0EA71FD6E33D0004A0AF /* art.scnassets */; };
-		8B1B0EAA1FD6E33D0004A0AF /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B1B0EA91FD6E33D0004A0AF /* ViewController.swift */; };
+		8B1B0EAA1FD6E33D0004A0AF /* OneDeviceViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B1B0EA91FD6E33D0004A0AF /* OneDeviceViewController.swift */; };
 		8B1B0EAD1FD6E33D0004A0AF /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8B1B0EAB1FD6E33D0004A0AF /* Main.storyboard */; };
 		8B1B0EAF1FD6E33D0004A0AF /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8B1B0EAE1FD6E33D0004A0AF /* Assets.xcassets */; };
 		8B1B0EB21FD6E33D0004A0AF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8B1B0EB01FD6E33D0004A0AF /* LaunchScreen.storyboard */; };
 		8B1B0EBB1FD6E60C0004A0AF /* Plane.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B1B0EBA1FD6E60C0004A0AF /* Plane.swift */; };
+		8B5B5A0820077229007F3FD6 /* HomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B5B5A0720077229007F3FD6 /* HomeViewController.swift */; };
+		8B5B5A0C20077343007F3FD6 /* TwoDevicesViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B5B5A0B20077343007F3FD6 /* TwoDevicesViewController.swift */; };
+		8B5B5A132008B1E2007F3FD6 /* Log.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B5B5A122008B1E2007F3FD6 /* Log.swift */; };
+		8B5B5A152008B21A007F3FD6 /* GlobalVars.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B5B5A142008B21A007F3FD6 /* GlobalVars.swift */; };
 		8B9EBEAF1FE91989008876A5 /* CollisionTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B9EBEAE1FE91989008876A5 /* CollisionTypes.swift */; };
 		8BFBAE6F1FDAC9FB00C70179 /* GameCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BFBAE6E1FDAC9FB00C70179 /* GameCell.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		8B0D100E1FD8242E00D65C5B /* ViewController+ARSKViewDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ViewController+ARSKViewDelegate.swift"; sourceTree = "<group>"; };
 		8B1B0EA21FD6E33D0004A0AF /* ARTicTacToe.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ARTicTacToe.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8B1B0EA51FD6E33D0004A0AF /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		8B1B0EA71FD6E33D0004A0AF /* art.scnassets */ = {isa = PBXFileReference; lastKnownFileType = wrapper.scnassets; path = art.scnassets; sourceTree = "<group>"; };
-		8B1B0EA91FD6E33D0004A0AF /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
+		8B1B0EA91FD6E33D0004A0AF /* OneDeviceViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OneDeviceViewController.swift; sourceTree = "<group>"; };
 		8B1B0EAC1FD6E33D0004A0AF /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		8B1B0EAE1FD6E33D0004A0AF /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		8B1B0EB11FD6E33D0004A0AF /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		8B1B0EB31FD6E33D0004A0AF /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		8B1B0EBA1FD6E60C0004A0AF /* Plane.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Plane.swift; sourceTree = "<group>"; };
+		8B5B5A0720077229007F3FD6 /* HomeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewController.swift; sourceTree = "<group>"; };
+		8B5B5A0B20077343007F3FD6 /* TwoDevicesViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TwoDevicesViewController.swift; sourceTree = "<group>"; };
+		8B5B5A122008B1E2007F3FD6 /* Log.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Log.swift; sourceTree = "<group>"; };
+		8B5B5A142008B21A007F3FD6 /* GlobalVars.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalVars.swift; sourceTree = "<group>"; };
 		8B9EBEAE1FE91989008876A5 /* CollisionTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollisionTypes.swift; sourceTree = "<group>"; };
 		8BFBAE6E1FDAC9FB00C70179 /* GameCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameCell.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -65,11 +71,10 @@
 			isa = PBXGroup;
 			children = (
 				8B1B0EA51FD6E33D0004A0AF /* AppDelegate.swift */,
-				8B1B0EA91FD6E33D0004A0AF /* ViewController.swift */,
-				8B0D100E1FD8242E00D65C5B /* ViewController+ARSKViewDelegate.swift */,
-				8B1B0EBA1FD6E60C0004A0AF /* Plane.swift */,
-				8BFBAE6E1FDAC9FB00C70179 /* GameCell.swift */,
-				8B9EBEAE1FE91989008876A5 /* CollisionTypes.swift */,
+				8B5B5A0920077258007F3FD6 /* ViewControllers */,
+				8B5B5A0A2007732F007F3FD6 /* Managers */,
+				8BBB57C6200CE107008534A6 /* Objects */,
+				8B5B5A112008B1CE007F3FD6 /* Utilities */,
 				8B1B0EB91FD6E3C00004A0AF /* Ressources */,
 			);
 			path = ARTicTacToe;
@@ -85,6 +90,42 @@
 				8B1B0EB31FD6E33D0004A0AF /* Info.plist */,
 			);
 			path = Ressources;
+			sourceTree = "<group>";
+		};
+		8B5B5A0920077258007F3FD6 /* ViewControllers */ = {
+			isa = PBXGroup;
+			children = (
+				8B5B5A0720077229007F3FD6 /* HomeViewController.swift */,
+				8B1B0EA91FD6E33D0004A0AF /* OneDeviceViewController.swift */,
+				8B5B5A0B20077343007F3FD6 /* TwoDevicesViewController.swift */,
+			);
+			path = ViewControllers;
+			sourceTree = "<group>";
+		};
+		8B5B5A0A2007732F007F3FD6 /* Managers */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Managers;
+			sourceTree = "<group>";
+		};
+		8B5B5A112008B1CE007F3FD6 /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				8B5B5A122008B1E2007F3FD6 /* Log.swift */,
+				8B5B5A142008B21A007F3FD6 /* GlobalVars.swift */,
+			);
+			path = Utilities;
+			sourceTree = "<group>";
+		};
+		8BBB57C6200CE107008534A6 /* Objects */ = {
+			isa = PBXGroup;
+			children = (
+				8B1B0EBA1FD6E60C0004A0AF /* Plane.swift */,
+				8BFBAE6E1FDAC9FB00C70179 /* GameCell.swift */,
+				8B9EBEAE1FE91989008876A5 /* CollisionTypes.swift */,
+			);
+			path = Objects;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -161,10 +202,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				8BFBAE6F1FDAC9FB00C70179 /* GameCell.swift in Sources */,
-				8B1B0EAA1FD6E33D0004A0AF /* ViewController.swift in Sources */,
+				8B5B5A152008B21A007F3FD6 /* GlobalVars.swift in Sources */,
+				8B5B5A132008B1E2007F3FD6 /* Log.swift in Sources */,
+				8B1B0EAA1FD6E33D0004A0AF /* OneDeviceViewController.swift in Sources */,
 				8B9EBEAF1FE91989008876A5 /* CollisionTypes.swift in Sources */,
-				8B0D100F1FD8242E00D65C5B /* ViewController+ARSKViewDelegate.swift in Sources */,
 				8B1B0EBB1FD6E60C0004A0AF /* Plane.swift in Sources */,
+				8B5B5A0C20077343007F3FD6 /* TwoDevicesViewController.swift in Sources */,
+				8B5B5A0820077229007F3FD6 /* HomeViewController.swift in Sources */,
 				8B1B0EA61FD6E33D0004A0AF /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

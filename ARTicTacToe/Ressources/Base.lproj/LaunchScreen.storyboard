@@ -31,10 +31,10 @@
                                 <nil key="highlightedColor"/>
                             </label>
                             <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="eurelis_logo" translatesAutoresizingMaskIntoConstraints="NO" id="SxZ-a0-Xgr">
-                                <rect key="frame" x="283" y="230.5" width="100" height="100"/>
+                                <rect key="frame" x="258" y="230.5" width="150" height="150"/>
                                 <constraints>
                                     <constraint firstAttribute="width" secondItem="SxZ-a0-Xgr" secondAttribute="height" multiplier="1:1" id="6bl-lu-41G"/>
-                                    <constraint firstAttribute="width" constant="100" id="Ehg-Yo-Xmy"/>
+                                    <constraint firstAttribute="width" constant="150" id="Ehg-Yo-Xmy"/>
                                 </constraints>
                             </imageView>
                         </subviews>

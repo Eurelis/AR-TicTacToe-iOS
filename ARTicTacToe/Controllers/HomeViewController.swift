@@ -39,8 +39,8 @@ class HomeViewController: UIViewController {
         actionSheet.addAction(UIAlertAction(title: "Cancel", style: .cancel))
         
         if let popoverController = actionSheet.popoverPresentationController {
-            popoverController.sourceView = self.view
-            popoverController.sourceRect = CGRect(x: self.view.bounds.midX, y: self.view.bounds.midY, width: 0, height: 0)
+            popoverController.sourceView = view
+            popoverController.sourceRect = CGRect(x: view.bounds.midX, y: view.bounds.midY, width: 0, height: 0)
             popoverController.permittedArrowDirections = []
         }
                 
@@ -49,22 +49,22 @@ class HomeViewController: UIViewController {
     
     
     func startHosting(action: UIAlertAction) {
-        if self.ARCompatible {
+        if ARCompatible {
             Log.info(log: "startHosting")
-            self.isHost = true
+            isHost = true
             performSegue(withIdentifier: "twodevicessegue", sender: self)
         }
     }
     
     func joinSession(action: UIAlertAction) {
         Log.info(log: "joinSession")
-        self.isHost = false
+        isHost = false
         performSegue(withIdentifier: "twodevicessegue", sender: self)
     }
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if let twoDevicesVC = segue.destination as? TwoDevicesViewController {
-            twoDevicesVC.isHost = self.isHost
+            twoDevicesVC.isHost = isHost
         }
     }
     

@@ -12,6 +12,7 @@ import SceneKit
 // MARK: - GameManagerDelegate
 protocol GameManagerDelegate {
     func currentPlayerChanged(manager : GameManager)
+    func getCurrentCameraPosition(manager: GameManager) -> SCNVector3?
 }
 
 // MARK: - GameManager
@@ -50,9 +51,7 @@ class GameManager {
     var circleCells: NSMutableArray = []
     
     
-    
     // MARK: - Game set
-    
     func resetGameCells() {
         gameCells = [:]
     }
@@ -82,6 +81,8 @@ class GameManager {
     }
     
     func resetGame() {
+        Log.info(log: "resetGame")
+        
         for cell in gameCells {
             let thisCell = cell.value as! GameCell
             thisCell.detector.removeAllParticleSystems()
@@ -106,6 +107,7 @@ class GameManager {
     }
     
     func setNextPlayer(nextPlayer: String?) {
+        Log.info(log: "setNextPlayer")
         if nextPlayer == nil {
             playing = playing == "cross" ? "circle":"cross"
         } else {
@@ -127,17 +129,23 @@ class GameManager {
     func cellForHitResult(hitTestResults: [SCNHitTestResult]) {
         if let firstResult = hitTestResults.first { // If there is a result
             let nodeForResult = firstResult.node //returns the detected tap
+            
+            Log.info(log: "nodeForResult : \(nodeForResult)")
             // Finding tapped cell from our detectors array
             for cell in gameCells {
                 let thisCell = cell.value as! GameCell
                 
                 // Comparing found tapped node and registered gamecells' nodes
                 if thisCell.detector == nodeForResult {
+                    Log.info(log: "thisCell.detector is result")
+                    
                     if thisCell.containsElement == nil {
                         Log.info(log: "Tapped cell : \(thisCell.key)")
                         insertCube(cell: thisCell) // cell is empty, inserting element
+                        break
+                    } else {
+                        Log.info(log: "cell is not empty")
                     }
-                    break
                 }
                 
             }
@@ -301,14 +309,21 @@ class GameManager {
     
     
     // Setting board game
-    func prepareGame(onPlane: SCNNode, length: CGFloat) {
+    func prepareGame(onPlane: SCNNode, sceneWidth: CGFloat, sceneHeight: CGFloat, sceneLength: CGFloat?) {
         parentPlane = onPlane
-        baseGameSize = length
+        baseGameSize = sceneLength
        
-        // Create grille
+        var length: CGFloat
+        if let sceneLength = sceneLength {
+            // game elements should not be bigger than smaller size of plane
+            let sizeToTake = sceneWidth < sceneLength ? sceneWidth : sceneLength
+            length = sizeToTake / 1.5
+        } else {
+            length = sceneHeight / 10
+        }
+        
         let cellSize = length / 3
         let onethird = Float(cellSize) / 2
-        
         let width = cellSize / 10
         
         let material = SCNMaterial()
@@ -607,15 +622,21 @@ class GameManager {
         let textLength = textNode.boundingBox.max.x - textNode.boundingBox.min.x
         let textScale = Float(baseGameSize!) / textLength
         textNode.scale = SCNVector3Make(textScale, textScale, 1)
-        
+
         let textHeight = textNode.boundingBox.max.y - textNode.boundingBox.min.y
         let halfHeight = textHeight / 2
         let scaledHalfHeight = halfHeight * textScale
         textNode.position.y = scaledHalfHeight
-        
+
         let halfLength = textLength / 2
         let scaledHalfLength = halfLength * textScale
         textNode.position.x = -scaledHalfLength
+
+//        if let _ = parentPlane as? Plane {
+//            if let cameraPosition = delegate!.getCurrentCameraPosition(manager: self) {
+//                textNode.look(at: cameraPosition)
+//            }
+//        }
         
         parentPlane.addChildNode(textNode)
         

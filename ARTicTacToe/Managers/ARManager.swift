@@ -44,6 +44,7 @@ class ARManager {
             node.removeFromParentNode()
         }
         
+        selectedPlane = nil
         planes = [:]
         setWorldBottom()
     }

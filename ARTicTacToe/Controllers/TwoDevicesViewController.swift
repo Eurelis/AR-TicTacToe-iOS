@@ -36,6 +36,7 @@ class TwoDevicesViewController: UIViewController {
     var isConnectedTo: MCPeerID?
     @IBOutlet weak var statusLabel: UILabel!
     
+    var currentARCameraPosition: SCNVector3?
     
     // MARK: - UIView methods
     override func viewDidLoad() {
@@ -280,30 +281,14 @@ extension TwoDevicesViewController: SCNPhysicsContactDelegate {
 // MARK: - GameManagerDelegate
 extension TwoDevicesViewController: GameManagerDelegate {
     func currentPlayerChanged(manager : GameManager) {
-//        let activePlayerAlpha: CGFloat = 0.9
-//        let activePlayerHeight: CGFloat = 40
-//        let inactivePlayerAlpha: CGFloat = 0.2
-//        let inactivePlayerHeight: CGFloat = 30
-//
-//        playerCrossButton.alpha = inactivePlayerAlpha
-//        playerCrossHeightConstraint.constant = inactivePlayerHeight
-//        playerCircleButton.alpha = inactivePlayerAlpha
-//        playerCircleHeightConstraint.constant = inactivePlayerHeight
-//
-//        var player = ""
-//        if gameManager.playing == "cross" {
-//            player = "X"
-//            playerCrossButton.alpha = activePlayerAlpha
-//            playerCrossHeightConstraint.constant = activePlayerHeight
-//        }
-//        else {
-//            player = "O"
-//            playerCircleButton.alpha = activePlayerAlpha
-//            playerCircleHeightConstraint.constant = activePlayerHeight
-//        }
-        
-       // setStatus(status: "Waiting for \(player) to play")
-       // Log.info(log: "Waiting for \(player) to play")
+    }
+    
+    func getCurrentCameraPosition(manager: GameManager) -> SCNVector3? {
+        guard arManager != nil else {
+            Log.info(log: "Trying to get position of a scenekit view")
+            return nil
+        }
+        return currentARCameraPosition
     }
 }
 
@@ -340,6 +325,18 @@ extension TwoDevicesViewController: ARSCNViewDelegate {
         if !plane.isSelected {
             plane.update(anchor: thisAnchor)
         }
+    }
+    
+    func renderer(_ renderer: SCNSceneRenderer, willRenderScene scene: SCNScene, atTime time: TimeInterval) {
+        guard let pointOfView = arManager?.currentARSceneView.pointOfView else { return }
+        let transform = pointOfView.transform
+        let orientation = SCNVector3(-transform.m31, -transform.m32, transform.m33)
+        let location = SCNVector3(transform.m41, transform.m42, transform.m43)
+        currentARCameraPosition = addVector3(lhv: orientation, rhv: location)
+    }
+    
+    private func addVector3(lhv:SCNVector3, rhv:SCNVector3) -> SCNVector3 {
+        return SCNVector3(lhv.x + rhv.x, lhv.y + rhv.y, lhv.z + rhv.z)
     }
 }
 

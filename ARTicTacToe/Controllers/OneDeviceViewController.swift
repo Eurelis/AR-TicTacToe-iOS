@@ -32,6 +32,9 @@ class OneDeviceViewController: UIViewController  {
     @IBOutlet weak var playerCircleHeightConstraint: NSLayoutConstraint!
 
     
+    // For AR text Position
+    var currentARCameraPosition: SCNVector3?
+    
     // MARK: - UIView Methods
     
     override func viewDidLoad() {
@@ -108,8 +111,7 @@ class OneDeviceViewController: UIViewController  {
     // MARK: - UIView IBActions
     
     @IBAction func backToHome(_ sender: Any) {
-        gameManager.resetGame()
-        pauseSession()
+        stopSession()
         dismiss(animated: true, completion: nil)
     }
     
@@ -133,6 +135,12 @@ class OneDeviceViewController: UIViewController  {
     
     // On tap on the refresh button
     @IBAction func refreshScene(_ sender: Any) {
+       refreshAll()
+    }
+    
+    
+    // MARK: - Private methods
+    private func refreshAll() {
         if ARCompatible {
             gameManager.resetGame()
             gameManager.resetGameCells()
@@ -141,8 +149,13 @@ class OneDeviceViewController: UIViewController  {
         }
     }
     
-    
-    // MARK: - Private methods
+    private func stopSession() {
+        if ARCompatible {
+            gameManager.resetGame()
+            gameManager.resetGameCells()
+            pauseSession()
+        }
+    }
     private func setStatus(status: String) {
         statusLabel.text = status
     }
@@ -157,8 +170,8 @@ class OneDeviceViewController: UIViewController  {
         if !ARCompatible || arManager!.selectedPlane != nil { // show confirm dialog only if a game is already set
             let alert = UIAlertController(title: "Restart game ?", message: "Confirm player mode switch ? This will restart the current game.", preferredStyle: .alert)
             let clearAction = UIAlertAction(title: "Restart", style: .default) { (alert: UIAlertAction!) -> Void in
-                self.gameManager.resetGame()
                 completion()
+                self.gameManager.resetGame()
             }
             let cancelAction = UIAlertAction(title: "Cancel", style: .cancel) { (alert: UIAlertAction!) -> Void in
                 Log.debug(log: "You pressed Cancel")
@@ -192,17 +205,22 @@ class OneDeviceViewController: UIViewController  {
         Log.info(log: "setGame")
         
         var parentPlane: SCNNode
-        var length: CGFloat
+        var sceneHeight: CGFloat
+        var sceneWidth: CGFloat
+        var sceneLength: CGFloat?
         
         if ARCompatible && arManager!.selectedPlane != nil {
             parentPlane = arManager!.selectedPlane!
-            length = arManager!.selectedPlane!.planeGeometry!.width / 2
+            sceneHeight = arManager!.selectedPlane!.planeGeometry!.height
+            sceneWidth = arManager!.selectedPlane!.planeGeometry!.width
+            sceneLength = arManager!.selectedPlane!.planeGeometry!.length
         } else {
             parentPlane = skManager!.ground
-            length = skManager!.currentSKView.bounds.height / 10
+            sceneHeight = skManager!.currentSKView.bounds.height
+            sceneWidth = skManager!.currentSKView.bounds.width
         }
         
-        gameManager.prepareGame(onPlane: parentPlane, length: length)
+        gameManager.prepareGame(onPlane: parentPlane, sceneWidth: sceneWidth, sceneHeight: sceneHeight, sceneLength: sceneLength)
     }
     
 }
@@ -256,6 +274,19 @@ extension OneDeviceViewController: GameManagerDelegate {
         setStatus(status: "Waiting for \(player) to play")
         Log.info(log: "Waiting for \(player) to play")
     }
+    
+    func getCurrentCameraPosition(manager: GameManager) -> SCNVector3? {
+        guard let arManager = arManager else {
+            return nil
+        }
+        guard let pointOfView = arManager.currentARSceneView.pointOfView else {
+            return nil
+        }
+        
+        Log.debug(log: "pointOfView position: \(pointOfView.position)")
+        Log.debug(log: "pointOfView worldPosition: \(pointOfView.worldPosition)")
+        return pointOfView.worldPosition
+    }
 }
 
 
@@ -292,4 +323,18 @@ extension OneDeviceViewController: ARSCNViewDelegate {
             plane.update(anchor: thisAnchor)
         }
     }
+//    func renderer(_ renderer: SCNSceneRenderer, willRenderScene scene: SCNScene, atTime time: TimeInterval) {
+//        guard let pointOfView = arManager?.currentARSceneView.pointOfView else { return }
+////        let transform = pointOfView.transform
+////        let orientation = SCNVector3(-transform.m31, -transform.m32, transform.m33)
+////        let location = SCNVector3(transform.m41, transform.m42, transform.m43)
+//        currentARCameraPosition = pointOfView.position
+//
+//        //arManager?.currentARSceneView
+//    }
+    
+//    private func addVector3(lhv:SCNVector3, rhv:SCNVector3) -> SCNVector3 {
+//        return SCNVector3(lhv.x + rhv.x, lhv.y + rhv.y, lhv.z + rhv.z)
+//    }
 }
+

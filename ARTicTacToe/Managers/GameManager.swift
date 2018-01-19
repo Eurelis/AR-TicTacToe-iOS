@@ -12,7 +12,7 @@ import SceneKit
 // MARK: - GameManagerDelegate
 protocol GameManagerDelegate {
     func currentPlayerChanged(manager : GameManager)
-    func getCurrentCameraPosition(manager: GameManager) -> float3?
+    func getCurrentCameraPosition(manager: GameManager) -> SCNVector3?
 }
 
 // MARK: - GameManager
@@ -107,19 +107,21 @@ class GameManager {
     }
     
     func setNextPlayer(nextPlayer: String?) {
-        Log.info(log: "setNextPlayer")
-        if nextPlayer == nil {
-            playing = playing == "cross" ? "circle":"cross"
-        } else {
-            playing = nextPlayer!
-        }
-        
-        delegate?.currentPlayerChanged(manager: self)
-        
-        let typeCurrentPlayer = playing == "cross" ? playerCross : playerCircle
-        if typeCurrentPlayer == "robot" {
-            // function AI plays
-            Timer.scheduledTimer(withTimeInterval: 2, repeats: false) { (timer) in
+        // function AI plays
+        Timer.scheduledTimer(withTimeInterval: 1, repeats: false) { (timer) in
+            
+            Log.info(log: "setNextPlayer")
+            if nextPlayer == nil {
+                self.playing = self.playing == "cross" ? "circle":"cross"
+            } else {
+                self.playing = nextPlayer!
+            }
+            
+            self.delegate?.currentPlayerChanged(manager: self)
+            
+            let typeCurrentPlayer = self.playing == "cross" ? self.playerCross : self.playerCircle
+            if typeCurrentPlayer == "robot" {
+                // function AI plays
                 self.AIMove()
             }
         }
@@ -311,7 +313,6 @@ class GameManager {
     // Setting board game
     func prepareGame(onPlane: SCNNode, sceneWidth: CGFloat, sceneHeight: CGFloat, sceneLength: CGFloat?) {
         parentPlane = onPlane
-        baseGameSize = sceneLength
        
         var length: CGFloat
         if let sceneLength = sceneLength {
@@ -321,6 +322,7 @@ class GameManager {
         } else {
             length = sceneHeight / 10
         }
+        baseGameSize = length
         
         let cellSize = length / 3
         let onethird = Float(cellSize) / 2
@@ -420,12 +422,20 @@ class GameManager {
         detector.geometry!.materials = [materialDetector]
         
         // We need to set the detector planes slightly higher than the board object so that it can detect touch
-        let zPosition = formattedCellSize / 2
+        var zPosition = formattedCellSize / 2
+       
+        if let parentPlane = parentPlane as? Plane {
+            if zPosition < parentPlane.planeGeometry!.height {
+                Log.debug(log: "detector zPosition too low")
+                zPosition = (parentPlane.planeGeometry!.height / 2) /*+ (zPosition)*/
+            }
+        }
         detector.position = SCNVector3Make(
             Float(centerX),
             Float(zPosition),
             Float(centerY))
 
+        
         parentPlane.addChildNode(detector)
         
         // Saving cell for later use
@@ -607,12 +617,12 @@ class GameManager {
     
     // Draw winning 3D Text
     func draw3DText(text: String) {
-        guard let parentPlane = parentPlane else {
-            Log.error(log: "No parent plane defined")
+        guard let parentPlane = parentPlane, let baseGameSize = baseGameSize else {
+            Log.error(log: "parentPlane or baseGameSize not defined")
             return
         }
         
-        let maxLength = baseGameSize! / 3.5
+        let maxLength = baseGameSize / 3.5
         
         // Creating a custom SCNText, extrusionDepth defines the text depth
         let textGeometry = SCNText(string: text, extrusionDepth: CGFloat(maxLength / 5))
@@ -623,54 +633,50 @@ class GameManager {
         let textLength = textNode.boundingBox.max.x - textNode.boundingBox.min.x
         let textHeight = textNode.boundingBox.max.y - textNode.boundingBox.min.y
         
-        let textScale = Float(baseGameSize!) / textLength
+        let textScale = Float(baseGameSize) / textLength
         textNode.scale = SCNVector3Make(textScale, textScale, 1)
         
         let scaledTextLength = textLength * textScale
         let scaledTextHeight = textHeight * textScale
         
-        textNode.position.x = -(scaledTextLength / 2)
-        
-        
-        if let _ = parentPlane as? Plane {
-            let plane = SCNPlane(width: CGFloat(scaledTextLength), height: CGFloat(scaledTextHeight))
-            let blueMaterial = SCNMaterial()
-            blueMaterial.diffuse.contents = UIColor.white.withAlphaComponent(0)
-            plane.firstMaterial = blueMaterial
-            let textParentNode = SCNNode(geometry: plane) // this node will hold our text node
+        // Creating a plane to hold text
+        let plane = SCNPlane(width: CGFloat(scaledTextLength), height: CGFloat(scaledTextHeight))
+        let blueMaterial = SCNMaterial()
+        blueMaterial.diffuse.contents = UIColor.blue.withAlphaComponent(0)
+        plane.firstMaterial = blueMaterial
+        let textParentNode = SCNNode(geometry: plane) // this node will hold our text node
 
-            if let cameraEulerAngles = delegate!.getCurrentCameraPosition(manager: self) {
-                textParentNode.eulerAngles = SCNVector3(0, cameraEulerAngles.y, 0)
-            }
-            
-            textNode.position.y = -(scaledTextHeight / 2)
-            textParentNode.addChildNode(textNode)
-            
-            textParentNode.position.y = scaledTextHeight
-            parentPlane.addChildNode(textParentNode)
-        }
-      
-        else {
-            
-            textNode.position.y = scaledTextHeight / 2
-            parentPlane.addChildNode(textNode)
+        // Orientation of the text is oposite from the camera
+        if let cameraEulerAngles = delegate!.getCurrentCameraPosition(manager: self) {
+            textParentNode.eulerAngles = SCNVector3(0, cameraEulerAngles.y, 0)
         }
         
-        winTextNode = textNode
+        textNode.position.x = -(scaledTextLength / 2)
+        textParentNode.addChildNode(textNode)
+        
+        let height = Float(baseGameSize) / 30 // = game height
+        
+        if parentPlane is Plane {
+            textParentNode.position.y = height * 2
+        } else {
+            textParentNode.position.y = height
+        }
+        
+        parentPlane.addChildNode(textParentNode)
+        
+        winTextNode = textParentNode
         let materialText = SCNMaterial()
         materialText.diffuse.contents = generateRandomColor()
-        winTextNode!.geometry!.materials = [materialText]
+        textNode.geometry!.materials = [materialText]
         
         // Just for fun, changing text color every 0.2 seconds
         winningTextTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { (timer) in
             let material = SCNMaterial()
             material.diffuse.contents = self.generateRandomColor()
-            if let winTextNode = self.winTextNode {
-                if let winTextGeometry = winTextNode.geometry {
-                    winTextGeometry.materials = [material]
-                }
+           
+            if let winTextGeometry = textNode.geometry {
+                winTextGeometry.materials = [material]
             }
-
             self.explodePiece() // Explosion in random cell
         }
     }

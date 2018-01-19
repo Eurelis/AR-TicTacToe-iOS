@@ -20,9 +20,14 @@ class Plane: SCNNode {
     init(anchor: ARPlaneAnchor) {
         super.init()
         
-        planeGeometry = SCNBox(width: CGFloat(anchor.extent.x),
-                                    height: 0.05,
-                                    length: CGFloat(anchor.extent.z),
+        let width = CGFloat(anchor.extent.x)
+        let length = CGFloat(anchor.extent.z)
+        
+        let height = width < length ? width / 5 : length / 5
+               
+        planeGeometry = SCNBox(width: width,
+                                    height: height,
+                                    length: length,
                                     chamferRadius: 0)
 
         position = SCNVector3Make(anchor.center.x, anchor.center.y, anchor.center.z)

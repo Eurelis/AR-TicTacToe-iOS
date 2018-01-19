@@ -283,7 +283,7 @@ extension TwoDevicesViewController: GameManagerDelegate {
     func currentPlayerChanged(manager : GameManager) {
     }
     
-    func getCurrentCameraPosition(manager: GameManager) -> float3? {
+    func getCurrentCameraPosition(manager: GameManager) -> SCNVector3? {
         return nil
     }
 }

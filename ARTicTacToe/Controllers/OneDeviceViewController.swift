@@ -271,11 +271,14 @@ extension OneDeviceViewController: GameManagerDelegate {
         Log.info(log: "Waiting for \(player) to play")
     }
     
-    func getCurrentCameraPosition(manager: GameManager) -> float3? {
-        guard let arManager = arManager else {
-            return nil
+    func getCurrentCameraPosition(manager: GameManager) -> SCNVector3? {
+        if let arManager = arManager {
+            return SCNVector3(arManager.currentARSceneView.session.currentFrame!.camera.eulerAngles)
         }
-        return arManager.currentARSceneView.session.currentFrame!.camera.eulerAngles
+        else if let skManager = skManager {
+            return skManager.camera.eulerAngles
+        }
+        else { return nil }
     }
 }
 

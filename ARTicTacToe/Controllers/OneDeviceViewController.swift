@@ -30,10 +30,6 @@ class OneDeviceViewController: UIViewController  {
     
     @IBOutlet weak var playerCircleButton: UIButton!
     @IBOutlet weak var playerCircleHeightConstraint: NSLayoutConstraint!
-
-    
-    // For AR text Position
-    var currentARCameraPosition: SCNVector3?
     
     // MARK: - UIView Methods
     
@@ -275,17 +271,11 @@ extension OneDeviceViewController: GameManagerDelegate {
         Log.info(log: "Waiting for \(player) to play")
     }
     
-    func getCurrentCameraPosition(manager: GameManager) -> SCNVector3? {
+    func getCurrentCameraPosition(manager: GameManager) -> float3? {
         guard let arManager = arManager else {
             return nil
         }
-        guard let pointOfView = arManager.currentARSceneView.pointOfView else {
-            return nil
-        }
-        
-        Log.debug(log: "pointOfView position: \(pointOfView.position)")
-        Log.debug(log: "pointOfView worldPosition: \(pointOfView.worldPosition)")
-        return pointOfView.worldPosition
+        return arManager.currentARSceneView.session.currentFrame!.camera.eulerAngles
     }
 }
 
@@ -323,18 +313,5 @@ extension OneDeviceViewController: ARSCNViewDelegate {
             plane.update(anchor: thisAnchor)
         }
     }
-//    func renderer(_ renderer: SCNSceneRenderer, willRenderScene scene: SCNScene, atTime time: TimeInterval) {
-//        guard let pointOfView = arManager?.currentARSceneView.pointOfView else { return }
-////        let transform = pointOfView.transform
-////        let orientation = SCNVector3(-transform.m31, -transform.m32, transform.m33)
-////        let location = SCNVector3(transform.m41, transform.m42, transform.m43)
-//        currentARCameraPosition = pointOfView.position
-//
-//        //arManager?.currentARSceneView
-//    }
-    
-//    private func addVector3(lhv:SCNVector3, rhv:SCNVector3) -> SCNVector3 {
-//        return SCNVector3(lhv.x + rhv.x, lhv.y + rhv.y, lhv.z + rhv.z)
-//    }
 }
 

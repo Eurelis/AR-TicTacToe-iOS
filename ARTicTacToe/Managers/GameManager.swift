@@ -12,7 +12,7 @@ import SceneKit
 // MARK: - GameManagerDelegate
 protocol GameManagerDelegate {
     func currentPlayerChanged(manager : GameManager)
-    func getCurrentCameraPosition(manager: GameManager) -> SCNVector3?
+    func getCurrentCameraPosition(manager: GameManager) -> float3?
 }
 
 // MARK: - GameManager
@@ -591,7 +591,7 @@ class GameManager {
     func endGame() {
         
         // Create text "-- WINS"
-        var text = "Loosers!"
+        var text = "It's a tie!"
         if (winner != nil) {
             text = winner!+" wins!"
         }
@@ -615,43 +615,62 @@ class GameManager {
         let maxLength = baseGameSize! / 3.5
         
         // Creating a custom SCNText, extrusionDepth defines the text depth
-        let scnTxt = SCNText(string: text, extrusionDepth: CGFloat(maxLength / 5))
-        let textNode = SCNNode(geometry: scnTxt)
+        let textGeometry = SCNText(string: text, extrusionDepth: CGFloat(maxLength / 5))
+        textGeometry.font = UIFont(name: "Helvetica Neue", size: 2)
+        let textNode = SCNNode(geometry: textGeometry)
         
         // Calculating text scale
         let textLength = textNode.boundingBox.max.x - textNode.boundingBox.min.x
+        let textHeight = textNode.boundingBox.max.y - textNode.boundingBox.min.y
+        
         let textScale = Float(baseGameSize!) / textLength
         textNode.scale = SCNVector3Make(textScale, textScale, 1)
-
-        let textHeight = textNode.boundingBox.max.y - textNode.boundingBox.min.y
-        let halfHeight = textHeight / 2
-        let scaledHalfHeight = halfHeight * textScale
-        textNode.position.y = scaledHalfHeight
-
-        let halfLength = textLength / 2
-        let scaledHalfLength = halfLength * textScale
-        textNode.position.x = -scaledHalfLength
-
-//        if let _ = parentPlane as? Plane {
-//            if let cameraPosition = delegate!.getCurrentCameraPosition(manager: self) {
-//                textNode.look(at: cameraPosition)
-//            }
-//        }
         
-        parentPlane.addChildNode(textNode)
+        let scaledTextLength = textLength * textScale
+        let scaledTextHeight = textHeight * textScale
+        
+        textNode.position.x = -(scaledTextLength / 2)
+        
+        
+        if let _ = parentPlane as? Plane {
+            let plane = SCNPlane(width: CGFloat(scaledTextLength), height: CGFloat(scaledTextHeight))
+            let blueMaterial = SCNMaterial()
+            blueMaterial.diffuse.contents = UIColor.white.withAlphaComponent(0)
+            plane.firstMaterial = blueMaterial
+            let textParentNode = SCNNode(geometry: plane) // this node will hold our text node
+
+            if let cameraEulerAngles = delegate!.getCurrentCameraPosition(manager: self) {
+                textParentNode.eulerAngles = SCNVector3(0, cameraEulerAngles.y, 0)
+            }
+            
+            textNode.position.y = -(scaledTextHeight / 2)
+            textParentNode.addChildNode(textNode)
+            
+            textParentNode.position.y = scaledTextHeight
+            parentPlane.addChildNode(textParentNode)
+        }
+      
+        else {
+            
+            textNode.position.y = scaledTextHeight / 2
+            parentPlane.addChildNode(textNode)
+        }
         
         winTextNode = textNode
         let materialText = SCNMaterial()
         materialText.diffuse.contents = generateRandomColor()
         winTextNode!.geometry!.materials = [materialText]
         
-        
         // Just for fun, changing text color every 0.2 seconds
         winningTextTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { (timer) in
             let material = SCNMaterial()
             material.diffuse.contents = self.generateRandomColor()
-            self.winTextNode!.geometry!.materials = [material]
-            
+            if let winTextNode = self.winTextNode {
+                if let winTextGeometry = winTextNode.geometry {
+                    winTextGeometry.materials = [material]
+                }
+            }
+
             self.explodePiece() // Explosion in random cell
         }
     }

@@ -283,12 +283,8 @@ extension TwoDevicesViewController: GameManagerDelegate {
     func currentPlayerChanged(manager : GameManager) {
     }
     
-    func getCurrentCameraPosition(manager: GameManager) -> SCNVector3? {
-        guard arManager != nil else {
-            Log.info(log: "Trying to get position of a scenekit view")
-            return nil
-        }
-        return currentARCameraPosition
+    func getCurrentCameraPosition(manager: GameManager) -> float3? {
+        return nil
     }
 }
 

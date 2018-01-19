@@ -9,5 +9,5 @@
 import UIKit
 
 struct GlobalVars {
-    static var debugLevel = LogLevel.Debug.rawValue
+    static var debugLevel = LogLevel.NoLog.rawValue
 }

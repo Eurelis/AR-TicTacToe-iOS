@@ -29,22 +29,30 @@ class HomeViewController: UIViewController {
     @IBAction func showConnectionPrompt(_ sender: Any) {
         Log.info(log: "showConnectionPrompt")
         
-        let actionSheet = UIAlertController(title: "Connect to others", message: nil, preferredStyle: .actionSheet)
+        showAlert()
         
-        if ARCompatible {
-             actionSheet.addAction(UIAlertAction(title: "Host a session", style: .default, handler: startHosting))
-        }
-       
-        actionSheet.addAction(UIAlertAction(title: "Join a session", style: .default, handler: joinSession))
-        actionSheet.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-        
-        if let popoverController = actionSheet.popoverPresentationController {
-            popoverController.sourceView = view
-            popoverController.sourceRect = CGRect(x: view.bounds.midX, y: view.bounds.midY, width: 0, height: 0)
-            popoverController.permittedArrowDirections = []
-        }
-                
-        present(actionSheet, animated: true, completion:nil)
+//        let actionSheet = UIAlertController(title: "Connect to others", message: nil, preferredStyle: .actionSheet)
+//
+//        if ARCompatible {
+//             actionSheet.addAction(UIAlertAction(title: "Host a session", style: .default, handler: startHosting))
+//        }
+//
+//        actionSheet.addAction(UIAlertAction(title: "Join a session", style: .default, handler: joinSession))
+//        actionSheet.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+//
+//        if let popoverController = actionSheet.popoverPresentationController {
+//            popoverController.sourceView = view
+//            popoverController.sourceRect = CGRect(x: view.bounds.midX, y: view.bounds.midY, width: 0, height: 0)
+//            popoverController.permittedArrowDirections = []
+//        }
+//
+//        present(actionSheet, animated: true, completion:nil)
+    }
+    
+    func showAlert() {
+        let alert = UIAlertController(title: "Coming Soon!", message: nil, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "Ok", style: .default, handler: nil))
+        present(alert, animated: true, completion:nil)
     }
     
     

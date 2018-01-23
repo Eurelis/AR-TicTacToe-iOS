@@ -303,18 +303,27 @@ extension OneDeviceViewController: ARSCNViewDelegate {
     }
     
     func renderer(_ renderer: SCNSceneRenderer, didUpdate node: SCNNode, for anchor: ARAnchor) {
-        guard let thisAnchor = anchor as? ARPlaneAnchor else{
-            return
-        }
-        
-        // See if this is a plane we are currently rendering
-        guard let plane: Plane = arManager!.planes.value(forKey: thisAnchor.identifier.uuidString) as? Plane else {
+        guard let thisAnchor = anchor as? ARPlaneAnchor,
+            let plane: Plane = arManager!.planes.value(forKey: thisAnchor.identifier.uuidString) as? Plane else{
             return
         }
         
         if !plane.isSelected {
             plane.update(anchor: thisAnchor)
         }
+    }
+    
+    func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
+        guard let arManager = arManager, let spotlight = gameManager.sceneSpotlights else {
+            return
+        }
+        
+        if let estimate = arManager.currentARSceneView.session.currentFrame!.lightEstimate {
+            Log.info(log: "light estimate: \(estimate.ambientIntensity)")
+            spotlight.light!.intensity = estimate.ambientIntensity
+        }
+        
+        
     }
 }
 

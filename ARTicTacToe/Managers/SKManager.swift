@@ -39,21 +39,12 @@ class SKManager {
         constraint.isGimbalLockEnabled = true
         self.camera.constraints = [constraint]
         
-        let ambientLight = SCNLight()
-        ambientLight.color = UIColor.darkGray
-        ambientLight.type = .ambient
-        self.camera.light = ambientLight
-        
-        let spotLight = SCNLight()
-        spotLight.type = .spot
-        spotLight.castsShadow = true
-        spotLight.spotInnerAngle = 70.0
-        spotLight.spotOuterAngle = 90.0
-        spotLight.zFar = 500
-        light = SCNNode()
-        light.light = spotLight
-        light.position = SCNVector3(x: 0, y: 25, z: 25)
-        light.constraints = [constraint]
+//        let ambientLight = SCNLight()
+//        ambientLight.color = UIColor.darkGray
+//        ambientLight.type = .ambient
+//        self.camera.light = ambientLight
+//
+//        light = SKManager.getSKLight(lookAt: ground)
         
         let groundShape = SCNPhysicsShape(geometry: groundGeometry, options: nil)
         let groundBody = SCNPhysicsBody(type: .kinematic, shape: groundShape)
@@ -66,8 +57,27 @@ class SKManager {
         if let scene = currentSKView.scene {
             scene.rootNode.addChildNode(self.camera)
             scene.rootNode.addChildNode(ground)
-            scene.rootNode.addChildNode(light)
+           // scene.rootNode.addChildNode(light)
         }
+    }
+    
+    static func getSKLight(lookAt: SCNNode) -> SCNNode {
+        let constraint = SCNLookAtConstraint(target: lookAt)
+        constraint.isGimbalLockEnabled = true
+        
+        let spotLight = SCNLight()
+        spotLight.type = .spot
+        spotLight.castsShadow = true
+        spotLight.spotInnerAngle = 70.0
+        spotLight.spotOuterAngle = 90.0
+        spotLight.zFar = 500
+        
+        let light = SCNNode()
+        light.light = spotLight
+        light.position = SCNVector3(x: 0, y: 25, z: 25)
+        light.constraints = [constraint]
+        
+        return light
     }
     
 }

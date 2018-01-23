@@ -22,9 +22,9 @@ class ARManager {
     init(ARSceneView: ARSCNView) {
         currentARSceneView = ARSceneView
         
-        currentARSceneView.debugOptions = [/*.showBoundingBoxes,*/ ARSCNDebugOptions.showFeaturePoints, ARSCNDebugOptions.showWorldOrigin]
-        currentARSceneView.autoenablesDefaultLighting = true
-        currentARSceneView.automaticallyUpdatesLighting = true
+        currentARSceneView.debugOptions = [/*.showBoundingBoxes, ARSCNDebugOptions.showWorldOrigin*/ ARSCNDebugOptions.showFeaturePoints]
+        currentARSceneView.autoenablesDefaultLighting = false
+       // currentARSceneView.automaticallyUpdatesLighting = true
     }
     
     func pauseARSession() {
@@ -38,6 +38,7 @@ class ARManager {
         Log.info(log: "startARTracking")
         
         ARconfiguration.planeDetection = .horizontal
+        ARconfiguration.isLightEstimationEnabled = true
         currentARSceneView.session.run(ARconfiguration, options: [.removeExistingAnchors, .resetTracking])
         
         for node in currentARSceneView.scene.rootNode.childNodes {

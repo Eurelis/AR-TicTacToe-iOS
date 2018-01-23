@@ -50,6 +50,7 @@ class GameManager {
     var crossCells: NSMutableArray = []
     var circleCells: NSMutableArray = []
     
+    var sceneSpotlights: SCNNode?
     
     // MARK: - Game set
     func resetGameCells() {
@@ -366,9 +367,38 @@ class GameManager {
         onPlane.addChildNode(nodeBar3)
         onPlane.addChildNode(nodeBar4)
         
+        insertSpotLight()
         setGameCells(cellSize: cellSize)
     }
     
+    func insertSpotLight () {
+        guard let parentPlane = parentPlane else {
+            Log.error(log: "parent plane is not defined")
+            return
+        }
+        
+        let spotLight = SCNLight()
+        spotLight.type = .spot
+        spotLight.spotInnerAngle = 45
+        spotLight.spotOuterAngle = 45
+        
+        spotLight.automaticallyAdjustsShadowProjection = true
+        spotLight.castsShadow = true
+        spotLight.shadowMode = .deferred
+        
+        let spotNode = SCNNode()
+        spotNode.light = spotLight
+        
+        if let cameraposition = delegate!.getCurrentCameraPosition(manager: self) {
+             spotNode.position = cameraposition
+        }
+        
+        spotNode.position.y = 50.0
+        spotNode.look(at: parentPlane.position)
+        
+        sceneSpotlights = spotNode
+        parentPlane.addChildNode(spotNode)
+    }
     
     // Calculating and setting cell "detectors"
     func setGameCells(cellSize: CGFloat) {

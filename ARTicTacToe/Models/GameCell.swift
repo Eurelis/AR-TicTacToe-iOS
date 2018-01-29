@@ -24,8 +24,8 @@ class GameCell {
     
     // Inserting element in the cell
     func setContains(node: SCNNode?, type: String?) {
-        self.containsElement = node
-        self.containsElementType = type
+        containsElement = node
+        containsElementType = type
     }
     
     // Remove all element from the cell
@@ -33,7 +33,7 @@ class GameCell {
         if containsElement != nil {
             containsElement!.removeFromParentNode()
         }
-        self.setContains(node: nil, type: nil)
+        setContains(node: nil, type: nil)
     }
     
 }

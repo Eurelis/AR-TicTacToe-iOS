@@ -4,8 +4,15 @@
 #### Made with iOS ARKit
 ***
 
+### Version 1.2
 
-### Version 2.0
+* Fixed bug impacting game and elements physics when playing on a large plane
+* Prepared UI for dual device game (not ready yet!)
+* The plane detection was improved
+* A few bugs appearing when switching player type were fixed
+
+
+### Version 1.1
 
 * switch player type and color by tapping on the person/robot icon
 * play against AI, against another player or watch two AIs playing against each other
